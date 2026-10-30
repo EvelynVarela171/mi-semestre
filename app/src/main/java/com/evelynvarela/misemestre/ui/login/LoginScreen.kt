@@ -1,15 +1,18 @@
 package com.evelynvarela.misemestre.ui.login
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -33,6 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,6 +60,8 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
     var clave by remember { mutableStateOf("") }
     var caraLumi by remember { mutableStateOf(CaraLumi.Normal) }
     var lumiSaluda by remember { mutableStateOf(false) }
+    var claveEnFoco by remember { mutableStateOf(false) }
+    val tecladoAbierto = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val scope = rememberCoroutineScope()
 
     BoxWithConstraints(
@@ -106,6 +113,8 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
             LumiAnimada(
                 cara = caraLumi,
                 saludando = lumiSaluda,
+                // Se tapa los ojos mientras escriben la contraseña
+                tapandoOjos = claveEnFoco,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(190.dp)
@@ -124,35 +133,40 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
 
             Spacer(Modifier.weight(1f))
 
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(50)
-            ) {
-                Text(
-                    text = "Mi Semestre",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
+            // Con el teclado abierto se oculta el texto para que Lumi siga a la vista
+            AnimatedVisibility(visible = !tecladoAbierto) {
+                Column {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            text = "Mi Semestre",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        text = "Tu semestre,\nsin correr al final.",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "Notas, entregas y Lumi, una medusita que te ayuda a decidir qué hacer primero.",
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+                }
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = "Tu semestre,\nsin correr al final.",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = "Notas, entregas y Lumi, una medusita que te ayuda a decidir qué hacer primero.",
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-            )
-
-            Spacer(Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = correo,
@@ -186,7 +200,9 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { claveEnFoco = it.isFocused }
             )
 
             Spacer(Modifier.height(20.dp))

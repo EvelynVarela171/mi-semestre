@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -50,7 +52,8 @@ private val Estrella = Color(0xFFFFE27A)
 fun LumiAnimada(
     cara: CaraLumi,
     saludando: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tapandoOjos: Boolean = false
 ) {
     val movimiento = rememberInfiniteTransition(label = "movimiento")
     val onda by movimiento.animateFloat(
@@ -70,6 +73,25 @@ fun LumiAnimada(
         animationSpec = tween(250),
         label = "saludo"
     )
+    val tapar by animateFloatAsState(
+        targetValue = if (tapandoOjos) 1f else 0f,
+        animationSpec = tween(300),
+        label = "tapar"
+    )
+
+    // Con los ojos tapados, abre un huequito entre las cintas para espiar
+    val espiando = remember { Animatable(0f) }
+    var espiaDerecha by remember { mutableStateOf(true) }
+    LaunchedEffect(tapandoOjos) {
+        espiando.snapTo(0f)
+        while (tapandoOjos) {
+            delay(1600)
+            espiando.animateTo(1f, tween(160))
+            delay(800)
+            espiando.animateTo(0f, tween(160))
+            espiaDerecha = !espiaDerecha
+        }
+    }
 
     // Parpadea cada cierto tiempo: 1 = ojos abiertos
     val ojos = remember { Animatable(1f) }
@@ -94,10 +116,17 @@ fun LumiAnimada(
             drawCircle(Estrella, 3.5f, Offset(80f, 31f))
             drawCircle(Estrella, 3f, Offset(90f, 36f))
 
-            dibujarCinta(Durazno, 56f, 0f, onda)
-            dibujarCinta(Cielo, 72f, 1.5f, onda)
-            dibujarCinta(Rosa, 88f, 3f, onda)
-            dibujarCinta(Menta, 104f, 4.5f, onda, saludo, manito)
+            val huecoIzquierdo = if (espiaDerecha) 0f else espiando.value * 4f
+            val huecoDerecho = if (espiaDerecha) espiando.value * 4f else 0f
+            val cintas: () -> Unit = {
+                dibujarCinta(Durazno, 56f, 0f, onda, tapar = tapar, ojoX = 64.4f - huecoIzquierdo)
+                dibujarCinta(Cielo, 72f, 1.5f, onda, tapar = tapar, ojoX = 71.6f + huecoIzquierdo)
+                dibujarCinta(Rosa, 88f, 3f, onda, tapar = tapar, ojoX = 88.4f - huecoDerecho)
+                dibujarCinta(Menta, 104f, 4.5f, onda, saludo, manito, tapar, 95.6f + huecoDerecho)
+            }
+
+            // Colgando van detrás de Lumi; para tapar los ojos pasan por delante
+            if (tapar == 0f) cintas()
 
             drawPath(domo, Cupula)
             listOf(48f to 90f, 62f to 91f, 76f to 91f, 90f to 91f, 104f to 91f).forEach { (x, y) ->
@@ -136,6 +165,8 @@ fun LumiAnimada(
 
             drawOval(Rosa, Offset(51f, 76.8f), Size(12f, 6.4f))
             drawOval(Rosa, Offset(97f, 76.8f), Size(12f, 6.4f))
+
+            if (tapar > 0f) cintas()
         }
     }
 }
@@ -148,7 +179,9 @@ private fun DrawScope.dibujarCinta(
     fase: Float,
     onda: Float,
     saludo: Float = 0f,
-    manito: Float = 0f
+    manito: Float = 0f,
+    tapar: Float = 0f,
+    ojoX: Float = x
 ) {
     val cinta = Path()
     for (i in 0..14) {
@@ -161,12 +194,17 @@ private fun DrawScope.dibujarCinta(
         val yBrazo = 88f - 34f * t * t
         val puntoX = xCuelga + (xBrazo - xCuelga) * saludo
         val puntoY = yCuelga + (yBrazo - yCuelga) * saludo
-        if (i == 0) cinta.moveTo(puntoX, puntoY) else cinta.lineTo(puntoX, puntoY)
+        // Cinta subiendo hasta tapar el ojo
+        val xOjo = x + (ojoX - x) * t
+        val yOjo = 94f - 34f * t
+        val finalX = puntoX + (xOjo - puntoX) * tapar
+        val finalY = puntoY + (yOjo - puntoY) * tapar
+        if (i == 0) cinta.moveTo(finalX, finalY) else cinta.lineTo(finalX, finalY)
     }
     drawPath(
         cinta,
         color,
-        style = Stroke(width = 6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        style = Stroke(width = 6f + 2f * tapar, cap = StrokeCap.Round, join = StrokeJoin.Round)
     )
 }
 
