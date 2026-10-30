@@ -2,22 +2,22 @@ package com.evelynvarela.misemestre.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Lila = Color(0xA78BFA)
+val Lila = Color(0xFFA78BFA)
 
-val LilaTinta = Color(0x20104F)
+val LilaTinta = Color(0xFF20104F)
 
-val Tinta = Color(0x251B45)
+val Tinta = Color(0xFF251B45)
 
-val Nube = Color(0xFBF8FF)
+val Nube = Color(0xFFFBF8FF)
 
-val Fucsia = Color(0xFF5C8A)
+val Fucsia = Color(0xFFFF5C8A)
 
-val Durazno = Color(0xFFB38A)
+val Durazno = Color(0xFFFFB38A)
 
-val Cielo = Color(0x8FD3FF)
+val Cielo = Color(0xFF8FD3FF)
 
-val Rosa = Color(0xFFA8D2)
+val Rosa = Color(0xFFFFA8D2)
 
-val Menta = Color(0xA6F0C6)
+val Menta = Color(0xFFA6F0C6)
 
-val Blanco = Color(0xFFFFFF)
+val Blanco = Color(0xFFFFFFFF)

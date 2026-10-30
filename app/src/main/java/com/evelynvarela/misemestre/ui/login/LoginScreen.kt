@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.evelynvarela.misemestre.ui.theme.MiSemestreTheme
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
     // Estado: lo que la persona escribe en cada campo
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
@@ -99,7 +99,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(20.dp))
 
         Button(
-            onClick = { /* Fase 5: iniciar sesión con Firebase */ },
+            onClick = onEntrar,
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
@@ -124,6 +124,6 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 @Composable
 fun LoginPreview() {
     MiSemestreTheme {
-        LoginScreen()
+        LoginScreen(onEntrar = {})
     }
 }
