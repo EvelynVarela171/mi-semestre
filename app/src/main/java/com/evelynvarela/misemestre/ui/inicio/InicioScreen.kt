@@ -31,17 +31,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.evelynvarela.misemestre.data.AppDatabase
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
@@ -51,7 +49,6 @@ import com.evelynvarela.misemestre.ui.theme.Lila
 import com.evelynvarela.misemestre.ui.theme.Menta
 import com.evelynvarela.misemestre.ui.theme.MiSemestreTheme
 import com.evelynvarela.misemestre.ui.theme.Rosa
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -65,12 +62,8 @@ private val coloresMateria = listOf(
 )
 
 @Composable
-fun InicioScreen(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val dao = remember { AppDatabase.obtener(context).materiaDao() }
-    // null = todavía está leyendo la base de datos
-    val materias by remember { dao.verTodas() }.collectAsState(initial = null)
-    val scope = rememberCoroutineScope()
+fun InicioScreen(modifier: Modifier = Modifier, viewModel: InicioViewModel = viewModel()) {
+    val materias by viewModel.materias.collectAsState()
 
     var agregando by remember { mutableStateOf(false) }
     var materiaPorBorrar by remember { mutableStateOf<Materia?>(null) }
@@ -87,7 +80,7 @@ fun InicioScreen(modifier: Modifier = Modifier) {
             onCancelar = { agregando = false },
             onGuardar = { nombre, creditos ->
                 agregando = false
-                scope.launch { dao.agregar(Materia(nombre = nombre, creditos = creditos)) }
+                viewModel.agregar(nombre, creditos)
             }
         )
     }
@@ -101,7 +94,7 @@ fun InicioScreen(modifier: Modifier = Modifier) {
                 Button(
                     onClick = {
                         materiaPorBorrar = null
-                        scope.launch { dao.borrar(materia) }
+                        viewModel.borrar(materia)
                     }
                 ) {
                     Text("Borrar")
