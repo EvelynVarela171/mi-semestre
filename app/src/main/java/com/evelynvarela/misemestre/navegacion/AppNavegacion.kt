@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.evelynvarela.misemestre.ui.bienvenida.BienvenidaScreen
 import com.evelynvarela.misemestre.ui.inicio.InicioScreen
 import com.evelynvarela.misemestre.ui.login.LoginScreen
 
@@ -14,9 +15,19 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
 
     NavHost(
         navController = navController,
-        startDestination = "login",
+        startDestination = "bienvenida",
         modifier = modifier
     ) {
+        composable("bienvenida") {
+            BienvenidaScreen(
+                onTerminar = {
+                    navController.navigate("login") {
+                        popUpTo("bienvenida") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 onEntrar = {

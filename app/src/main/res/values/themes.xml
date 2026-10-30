@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.MiSemestre" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.MiSemestre.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FBF8FF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_lumi_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.MiSemestre</item>
+    </style>
 </resources>
