@@ -21,3 +21,15 @@ val Rosa = Color(0xFFFFA8D2)
 val Menta = Color(0xFFA6F0C6)
 
 val Blanco = Color(0xFFFFFFFF)
+
+val LilaClaro = Color(0xFFE6DDFF)
+
+val LilaOscuro = Color(0xFF3B2A80)
+
+val DuraznoClaro = Color(0xFFFFE3D3)
+
+val RosaClaro = Color(0xFFFFE0EC)
+
+val Linea = Color(0xFFE9E2FA)
+
+val TextoSuave = Color(0xFF5E5880)
