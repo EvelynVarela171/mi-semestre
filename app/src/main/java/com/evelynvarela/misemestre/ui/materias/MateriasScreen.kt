@@ -60,11 +60,12 @@ private val coloresMateria = listOf(
     Menta to Color(0xFF0D4A2A)
 )
 
-fun colorDeMateria(id: Int): Pair<Color, Color> = coloresMateria[(id - 1).mod(coloresMateria.size)]
+fun colorDeMateria(id: String): Pair<Color, Color> =
+    coloresMateria[id.hashCode().mod(coloresMateria.size)]
 
 @Composable
 fun MateriasScreen(
-    onAbrirMateria: (Int) -> Unit,
+    onAbrirMateria: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: InicioViewModel = viewModel()
 ) {
@@ -118,7 +119,7 @@ fun MateriasScreen(
 @Composable
 private fun MateriasContenido(
     materias: List<Materia>?,
-    onAbrirMateria: (Int) -> Unit,
+    onAbrirMateria: (String) -> Unit,
     onAgregar: () -> Unit,
     onBorrar: (Materia) -> Unit,
     modifier: Modifier = Modifier
@@ -300,8 +301,8 @@ fun MateriasPreview() {
     MiSemestreTheme {
         MateriasContenido(
             materias = listOf(
-                Materia(id = 1, nombre = "Apps móviles", creditos = 3),
-                Materia(id = 2, nombre = "Bases de datos", creditos = 3)
+                Materia(id = "1", nombre = "Apps móviles", creditos = 3),
+                Materia(id = "2", nombre = "Bases de datos", creditos = 3)
             ),
             onAbrirMateria = {},
             onAgregar = {},

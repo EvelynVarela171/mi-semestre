@@ -9,8 +9,8 @@ import org.junit.Test
 
 class CalculadoraNotasTest {
 
-    private val parcial = Nota(materiaId = 1, nombre = "Parcial", peso = 40, valor = 4.8)
-    private val final = Nota(materiaId = 1, nombre = "Final", peso = 60)
+    private val parcial = Nota(materiaId = "1", nombre = "Parcial", peso = 40, valor = 4.8)
+    private val final = Nota(materiaId = "1", nombre = "Final", peso = 60)
 
     @Test
     fun calculaElPromedioDeLoEvaluado() {
@@ -33,7 +33,7 @@ class CalculadoraNotasTest {
 
     @Test
     fun laMetaYaAseguradaDaCeroOMenos() {
-        val notas = listOf(Nota(materiaId = 1, nombre = "Parcial", peso = 80, valor = 5.0), final)
+        val notas = listOf(Nota(materiaId = "1", nombre = "Parcial", peso = 80, valor = 5.0), final)
         assertTrue(CalculadoraNotas.notaNecesaria(notas, 3.0)!! <= 0)
     }
 

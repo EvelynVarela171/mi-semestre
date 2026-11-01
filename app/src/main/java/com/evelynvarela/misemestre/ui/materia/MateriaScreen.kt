@@ -454,11 +454,11 @@ private fun DialogoNota(
 fun MateriaPreview() {
     MiSemestreTheme {
         MateriaContenido(
-            materia = Materia(id = 1, nombre = "Diseño de Apps para Móviles", creditos = 3),
+            materia = Materia(id = "1", nombre = "Diseño de Apps para Móviles", creditos = 3),
             notas = listOf(
-                Nota(materiaId = 1, nombre = "Foro temático", peso = 20, valor = 4.6),
-                Nota(materiaId = 1, nombre = "Cátedra académica", peso = 20, valor = 5.0),
-                Nota(materiaId = 1, nombre = "Taller ABP", peso = 60)
+                Nota(materiaId = "1", nombre = "Foro temático", peso = 20, valor = 4.6),
+                Nota(materiaId = "1", nombre = "Cátedra académica", peso = 20, valor = 5.0),
+                Nota(materiaId = "1", nombre = "Taller ABP", peso = 60)
             ),
             onVolver = {},
             onAgregarNota = {},

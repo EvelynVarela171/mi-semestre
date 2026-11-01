@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.evelynvarela.misemestre.data.SesionRepository
 import com.evelynvarela.misemestre.ui.asistente.AsistenteScreen
 import com.evelynvarela.misemestre.ui.bienvenida.BienvenidaScreen
 import com.evelynvarela.misemestre.ui.componentes.BarraNavegacion
@@ -45,6 +47,7 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
     val entradaActual by navController.currentBackStackEntryAsState()
     val rutaActual = entradaActual?.destination?.route
     val tecladoAbierto = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val sesion = remember { SesionRepository() }
 
     Column(modifier.fillMaxSize()) {
         NavHost(
@@ -55,7 +58,8 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
             composable("bienvenida") {
                 BienvenidaScreen(
                     onTerminar = {
-                        navController.navigate("login") {
+                        val destino = if (sesion.usuario != null) "inicio" else "login"
+                        navController.navigate(destino) {
                             popUpTo("bienvenida") { inclusive = true }
                         }
                     }
@@ -86,6 +90,7 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
                 PerfilScreen(
                     onVolver = { navController.popBackStack() },
                     onCerrarSesion = {
+                        sesion.salir()
                         navController.navigate("login") {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
@@ -99,7 +104,7 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
 
             composable(
                 route = RUTA_MATERIA,
-                arguments = listOf(navArgument("id") { type = NavType.IntType })
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
             ) {
                 MateriaScreen(onVolver = { navController.popBackStack() })
             }

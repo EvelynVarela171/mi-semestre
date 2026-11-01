@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
 import com.evelynvarela.misemestre.ui.theme.Cielo
@@ -54,8 +56,43 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
+fun LoginScreen(
+    onEntrar: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = viewModel()
+) {
+    LoginContenido(
+        cargando = viewModel.cargando,
+        error = viewModel.error,
+        onEntrar = { correo, clave -> viewModel.entrar(correo, clave, onEntrar) },
+        onRegistrar = { nombre, correo, clave ->
+            viewModel.registrar(nombre, correo, clave, onEntrar)
+        },
+        onCambiarModo = viewModel::limpiarError,
+        modifier = modifier
+    )
+}
 
+@Composable
+private fun coloresCampo() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+)
+
+@Composable
+private fun LoginContenido(
+    cargando: Boolean,
+    error: String?,
+    onEntrar: (correo: String, clave: String) -> Unit,
+    onRegistrar: (nombre: String, correo: String, clave: String) -> Unit,
+    onCambiarModo: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    var creando by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
     var caraLumi by remember { mutableStateOf(CaraLumi.Normal) }
@@ -164,6 +201,20 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
 
+            AnimatedVisibility(visible = creando) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = coloresCampo(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                )
+            }
+
             OutlinedTextField(
                 value = correo,
                 onValueChange = { correo = it },
@@ -171,12 +222,7 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                ),
+                colors = coloresCampo(),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -190,28 +236,58 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                ),
+                colors = coloresCampo(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { claveEnFoco = it.isFocused }
             )
 
+            error?.let {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Spacer(Modifier.height(20.dp))
 
             Button(
-                onClick = onEntrar,
+                onClick = {
+                    if (creando) onRegistrar(nombre, correo, clave) else onEntrar(correo, clave)
+                },
+                enabled = !cargando && correo.isNotBlank() && clave.isNotEmpty() &&
+                    (!creando || nombre.isNotBlank()),
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
-                Text("Entrar", fontWeight = FontWeight.Bold)
+                Text(
+                    text = when {
+                        cargando -> "Un momento..."
+                        creando -> "Crear cuenta"
+                        else -> "Entrar"
+                    },
+                    fontWeight = FontWeight.Bold
+                )
             }
 
-            Spacer(Modifier.height(16.dp))
+            TextButton(
+                onClick = {
+                    creando = !creando
+                    onCambiarModo()
+                },
+                enabled = !cargando,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = if (creando) "¿Ya tienes cuenta? Entra" else "¿No tienes cuenta? Crea una",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -220,6 +296,12 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun LoginPreview() {
     MiSemestreTheme {
-        LoginScreen(onEntrar = {})
+        LoginContenido(
+            cargando = false,
+            error = null,
+            onEntrar = { _, _ -> },
+            onRegistrar = { _, _, _ -> },
+            onCambiarModo = {}
+        )
     }
 }

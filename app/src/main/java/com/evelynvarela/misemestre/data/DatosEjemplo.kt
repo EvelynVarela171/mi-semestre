@@ -6,15 +6,9 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 
-data class PerfilEjemplo(
-    val nombre: String,
-    val iniciales: String,
-    val correo: String,
-    val universidad: String,
-    val semestre: String
-)
+data class PerfilEjemplo(val universidad: String, val semestre: String)
 
-val perfilEjemplo = PerfilEjemplo("Evelyn", "EV", "estudiante@correo.com", "UCN", "2026-2")
+val perfilEjemplo = PerfilEjemplo("UCN", "2026-2")
 
 data class EntregaEjemplo(
     val id: Int,

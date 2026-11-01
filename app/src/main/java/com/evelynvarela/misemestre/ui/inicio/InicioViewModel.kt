@@ -6,13 +6,20 @@ import androidx.lifecycle.viewModelScope
 import com.evelynvarela.misemestre.data.AppDatabase
 import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.data.MateriaRepository
+import com.evelynvarela.misemestre.data.SesionRepository
+import com.evelynvarela.misemestre.data.Sincronizador
+import com.evelynvarela.misemestre.data.Usuario
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class InicioViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repositorio = MateriaRepository(AppDatabase.obtener(application).materiaDao())
+    private val base = AppDatabase.obtener(application)
+    private val repositorio = MateriaRepository(base.materiaDao(), base.notaDao())
+
+    val usuario: Usuario = SesionRepository().usuario ?: Usuario("", "")
+    val estadoNube = Sincronizador.obtener(application).estado
 
     val materias = repositorio.materias.stateIn(
         viewModelScope,

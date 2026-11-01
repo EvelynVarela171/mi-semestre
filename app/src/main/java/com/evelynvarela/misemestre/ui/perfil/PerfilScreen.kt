@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
 import com.evelynvarela.misemestre.data.entregasEjemplo
+import com.evelynvarela.misemestre.data.Usuario
 import com.evelynvarela.misemestre.data.perfilEjemplo
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
@@ -100,6 +101,7 @@ fun PerfilScreen(
     var confirmando by remember { mutableStateOf(false) }
 
     PerfilContenido(
+        usuario = viewModel.usuario,
         totalMaterias = materias.orEmpty().size,
         onVolver = onVolver,
         onCerrarSesion = { confirmando = true },
@@ -140,6 +142,7 @@ fun PerfilScreen(
 
 @Composable
 private fun PerfilContenido(
+    usuario: Usuario,
     totalMaterias: Int,
     onVolver: () -> Unit,
     onCerrarSesion: () -> Unit,
@@ -192,7 +195,7 @@ private fun PerfilContenido(
 
         Acuario(nivel)
         ProgresoNivel(puntos, nivel)
-        Carne()
+        Carne(usuario)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Dato("$totalMaterias", "Materias", Modifier.weight(1f))
@@ -331,7 +334,7 @@ private fun ProgresoNivel(puntos: Int, nivel: Int) {
 }
 
 @Composable
-private fun Carne() {
+private fun Carne(usuario: Usuario) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -347,7 +350,7 @@ private fun Carne() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = perfilEjemplo.iniciales,
+                text = usuario.iniciales,
                 color = Tinta,
                 fontFamily = Bricolage,
                 fontWeight = FontWeight.ExtraBold,
@@ -362,13 +365,13 @@ private fun Carne() {
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = perfilEjemplo.nombre,
+                text = usuario.nombre,
                 color = Blanco,
                 fontFamily = Bricolage,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 20.sp
             )
-            Text(perfilEjemplo.correo, color = Color(0xFFCFC6F0))
+            Text(usuario.correo, color = Color(0xFFCFC6F0))
             Text(
                 text = "Semestre ${perfilEjemplo.semestre}",
                 color = Color(0xFFCFC6F0),
@@ -428,6 +431,11 @@ private fun InsigniaLogro(logro: Logro, modifier: Modifier = Modifier) {
 @Composable
 fun PerfilPreview() {
     MiSemestreTheme {
-        PerfilContenido(totalMaterias = 2, onVolver = {}, onCerrarSesion = {})
+        PerfilContenido(
+            usuario = Usuario("Evelyn Varela", "estudiante@correo.com"),
+            totalMaterias = 2,
+            onVolver = {},
+            onCerrarSesion = {}
+        )
     }
 }

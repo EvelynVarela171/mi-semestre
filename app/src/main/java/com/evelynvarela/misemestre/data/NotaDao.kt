@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotaDao {
-    @Query("SELECT * FROM notas WHERE materiaId = :materiaId ORDER BY id")
-    fun verDeMateria(materiaId: Int): Flow<List<Nota>>
+    @Query("SELECT * FROM notas WHERE materiaId = :materiaId ORDER BY creadaEn")
+    fun verDeMateria(materiaId: String): Flow<List<Nota>>
+
+    @Query("SELECT * FROM notas WHERE materiaId = :materiaId")
+    suspend fun deMateria(materiaId: String): List<Nota>
 
     @Insert
     suspend fun agregar(nota: Nota)

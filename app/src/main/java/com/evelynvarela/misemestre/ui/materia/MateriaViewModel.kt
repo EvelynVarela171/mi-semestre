@@ -18,9 +18,9 @@ class MateriaViewModel(
     estado: SavedStateHandle
 ) : AndroidViewModel(application) {
 
-    private val materiaId: Int = checkNotNull(estado["id"])
+    private val materiaId: String = checkNotNull(estado["id"])
     private val base = AppDatabase.obtener(application)
-    private val materias = MateriaRepository(base.materiaDao())
+    private val materias = MateriaRepository(base.materiaDao(), base.notaDao())
     private val repositorio = NotaRepository(base.notaDao())
 
     val materia = materias.materias

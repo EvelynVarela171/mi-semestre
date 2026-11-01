@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "notas",
@@ -18,9 +19,10 @@ import androidx.room.PrimaryKey
     indices = [Index("materiaId")]
 )
 data class Nota(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val materiaId: Int,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val materiaId: String,
     val nombre: String,
     val peso: Int,
-    val valor: Double? = null
+    val valor: Double? = null,
+    val creadaEn: Long = System.currentTimeMillis()
 )

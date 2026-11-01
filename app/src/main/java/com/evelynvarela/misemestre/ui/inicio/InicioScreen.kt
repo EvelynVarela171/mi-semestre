@@ -39,7 +39,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
 import com.evelynvarela.misemestre.data.EntregaEjemplo
+import com.evelynvarela.misemestre.data.EstadoNube
 import com.evelynvarela.misemestre.data.Materia
+import com.evelynvarela.misemestre.data.Usuario
 import com.evelynvarela.misemestre.data.entregasEjemplo
 import com.evelynvarela.misemestre.data.textoDias
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
@@ -65,7 +67,7 @@ import java.util.Locale
 
 @Composable
 fun InicioScreen(
-    onAbrirMateria: (Int) -> Unit,
+    onAbrirMateria: (String) -> Unit,
     onVerMaterias: () -> Unit,
     onVerEntregas: () -> Unit,
     onVerAsistente: () -> Unit,
@@ -74,8 +76,11 @@ fun InicioScreen(
     viewModel: InicioViewModel = viewModel()
 ) {
     val materias by viewModel.materias.collectAsState()
+    val estadoNube by viewModel.estadoNube.collectAsState()
 
     InicioContenido(
+        usuario = viewModel.usuario,
+        estadoNube = estadoNube,
         materias = materias,
         onAbrirMateria = onAbrirMateria,
         onVerMaterias = onVerMaterias,
@@ -88,8 +93,10 @@ fun InicioScreen(
 
 @Composable
 private fun InicioContenido(
+    usuario: Usuario,
+    estadoNube: EstadoNube,
     materias: List<Materia>?,
-    onAbrirMateria: (Int) -> Unit,
+    onAbrirMateria: (String) -> Unit,
     onVerMaterias: () -> Unit,
     onVerEntregas: () -> Unit,
     onVerAsistente: () -> Unit,
@@ -123,8 +130,8 @@ private fun InicioContenido(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Encabezado(onVerPerfil)
-            ChipNube()
+            Encabezado(usuario, onVerPerfil)
+            ChipNube(estadoNube)
             TarjetaPromedio()
             SeccionMaterias(materias, onAbrirMateria, onVerMaterias)
             entregasEjemplo
@@ -137,7 +144,7 @@ private fun InicioContenido(
 }
 
 @Composable
-private fun Encabezado(onVerPerfil: () -> Unit) {
+private fun Encabezado(usuario: Usuario, onVerPerfil: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(
@@ -146,7 +153,7 @@ private fun Encabezado(onVerPerfil: () -> Unit) {
                 color = TextoSuave
             )
             Text(
-                text = "¡Hola, Evelyn!",
+                text = "¡Hola, ${usuario.primerNombre}!",
                 fontFamily = Bricolage,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 32.sp,
@@ -163,13 +170,13 @@ private fun Encabezado(onVerPerfil: () -> Unit) {
                 .clickable(onClick = onVerPerfil),
             contentAlignment = Alignment.Center
         ) {
-            Text("EV", fontFamily = Bricolage, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text(usuario.iniciales, fontFamily = Bricolage, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
         }
     }
 }
 
 @Composable
-private fun ChipNube() {
+private fun ChipNube(estado: EstadoNube) {
     Row(
         modifier = Modifier
             .background(LilaClaro, RoundedCornerShape(50))
@@ -177,14 +184,21 @@ private fun ChipNube() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_check),
-            contentDescription = null,
-            tint = Tinta,
-            modifier = Modifier.size(14.dp)
-        )
+        if (estado == EstadoNube.Sincronizado) {
+            Icon(
+                painter = painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = Tinta,
+                modifier = Modifier.size(14.dp)
+            )
+        }
         Text(
-            text = "Todo sincronizado en la nube",
+            text = when (estado) {
+                EstadoNube.Conectando -> "Conectando con la nube"
+                EstadoNube.Sincronizado -> "Todo sincronizado en la nube"
+                EstadoNube.Pendiente -> "Cambios por subir a la nube"
+                EstadoNube.SinConexion -> "Sin conexión: guardado en tu teléfono"
+            },
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.bodySmall
         )
@@ -274,7 +288,7 @@ private fun EncabezadoSeccion(titulo: String, accion: String, onAccion: () -> Un
 @Composable
 private fun SeccionMaterias(
     materias: List<Materia>?,
-    onAbrirMateria: (Int) -> Unit,
+    onAbrirMateria: (String) -> Unit,
     onVerMaterias: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -417,9 +431,11 @@ private fun fechaDeHoy(): String {
 fun InicioPreview() {
     MiSemestreTheme {
         InicioContenido(
+            usuario = Usuario("Evelyn Varela", "estudiante@correo.com"),
+            estadoNube = EstadoNube.Sincronizado,
             materias = listOf(
-                Materia(id = 1, nombre = "Apps móviles", creditos = 3),
-                Materia(id = 2, nombre = "Bases de datos", creditos = 3)
+                Materia(id = "1", nombre = "Apps móviles", creditos = 3),
+                Materia(id = "2", nombre = "Bases de datos", creditos = 3)
             ),
             onAbrirMateria = {},
             onVerMaterias = {},
