@@ -17,7 +17,6 @@ val Bricolage = FontFamily(
     Font(R.font.bricolage_extrabold, FontWeight.ExtraBold)
 )
 
-// Bricolage para títulos, Nunito para todo lo demás
 val Typography = Typography(
     headlineLarge = TextStyle(
         fontFamily = Bricolage,

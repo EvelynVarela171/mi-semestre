@@ -31,7 +31,6 @@ private const val RUTA_MATERIA = "materia/{id}"
 private val rutasConBarra =
     setOf("inicio", "materias", RUTA_MATERIA, "asistente", "entregas", "perfil")
 
-// Cambia de pestaña sin ir acumulando pantallas: Atrás siempre vuelve a Inicio
 private fun NavHostController.irAPestana(ruta: String) {
     navigate(ruta) {
         popUpTo("inicio") { saveState = true }
@@ -87,7 +86,6 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
                 PerfilScreen(
                     onVolver = { navController.popBackStack() },
                     onCerrarSesion = {
-                        // Limpia todo el historial: Atrás ya no vuelve a la app
                         navController.navigate("login") {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
@@ -102,11 +100,8 @@ fun AppNavegacion(modifier: Modifier = Modifier) {
             composable(
                 route = RUTA_MATERIA,
                 arguments = listOf(navArgument("id") { type = NavType.IntType })
-            ) { entrada ->
-                MateriaScreen(
-                    materiaId = entrada.arguments?.getInt("id") ?: 0,
-                    onVolver = { navController.popBackStack() }
-                )
+            ) {
+                MateriaScreen(onVolver = { navController.popBackStack() })
             }
 
             composable("asistente") {

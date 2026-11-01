@@ -14,7 +14,6 @@ class InicioViewModel(application: Application) : AndroidViewModel(application) 
 
     private val repositorio = MateriaRepository(AppDatabase.obtener(application).materiaDao())
 
-    // null = todavía está leyendo la base de datos
     val materias = repositorio.materias.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),

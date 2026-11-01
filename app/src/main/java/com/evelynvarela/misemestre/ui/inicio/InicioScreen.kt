@@ -307,7 +307,6 @@ private fun SeccionMaterias(
             }
         }
 
-        // Cuatro tarjetas de a dos por fila; las demás están en la pestaña Materias
         materias.orEmpty().take(4).chunked(2).forEach { fila ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 fila.forEach { materia ->

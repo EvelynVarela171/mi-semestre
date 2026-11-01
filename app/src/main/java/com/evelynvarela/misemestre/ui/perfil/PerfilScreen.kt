@@ -80,7 +80,6 @@ import kotlin.math.sin
 
 private data class Nivel(val nombre: String, val desde: Int)
 
-// Lumi crece con los puntos: 10 por materia y 20 por entrega lista
 private val niveles = listOf(
     Nivel("Huevito", 0),
     Nivel("Medusita", 30),
@@ -225,7 +224,6 @@ private fun PerfilContenido(
     }
 }
 
-// La casa de Lumi: tiene más burbujas a medida que sube de nivel
 @Composable
 private fun Acuario(nivel: Int) {
     var caraLumi by remember { mutableStateOf(CaraLumi.Normal) }
@@ -248,7 +246,6 @@ private fun Acuario(nivel: Int) {
             .background(Brush.verticalGradient(listOf(Color(0xFFBFE8FF), LilaClaro)))
     ) {
         Canvas(Modifier.matchParentSize()) {
-            // La arena del fondo
             drawOval(
                 color = Durazno.copy(alpha = 0.55f),
                 topLeft = Offset(-size.width * 0.1f, size.height * 0.84f),

@@ -106,14 +106,11 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
                 .padding(24.dp)
         ) {
 
-            // Los dos weight reparten el espacio libre arriba y abajo de Lumi
             Spacer(Modifier.weight(1f))
 
-            // Si la tocan, Lumi se sorprende y saluda
             LumiAnimada(
                 cara = caraLumi,
                 saludando = lumiSaluda,
-                // Se tapa los ojos mientras escriben la contraseña
                 tapandoOjos = claveEnFoco,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -133,7 +130,6 @@ fun LoginScreen(onEntrar: () -> Unit, modifier: Modifier = Modifier) {
 
             Spacer(Modifier.weight(1f))
 
-            // Con el teclado abierto se oculta el texto para que Lumi siga a la vista
             AnimatedVisibility(visible = !tecladoAbierto) {
                 Column {
                     Surface(

@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun BienvenidaScreen(onTerminar: () -> Unit, modifier: Modifier = Modifier) {
-    // 0 = centro, 1 = fuera a la derecha. Empieza centrada, donde la deja la pantalla de Android
     val recorrido = remember { Animatable(0f) }
     val salto = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -75,7 +74,6 @@ fun BienvenidaScreen(onTerminar: () -> Unit, modifier: Modifier = Modifier) {
         label = "balanceo"
     )
 
-    // El guion de Lumi: saluda, guiña un ojo y se va nadando
     LaunchedEffect(Unit) {
         delay(400)
         cara = CaraLumi.Feliz

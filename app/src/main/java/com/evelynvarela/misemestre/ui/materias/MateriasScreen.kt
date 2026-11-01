@@ -53,7 +53,6 @@ import com.evelynvarela.misemestre.ui.theme.MiSemestreTheme
 import com.evelynvarela.misemestre.ui.theme.Rosa
 import com.evelynvarela.misemestre.ui.theme.TextoSuave
 
-// Color de fondo y de texto de cada materia
 private val coloresMateria = listOf(
     Durazno to Color(0xFF5C2200),
     Cielo to Color(0xFF06395A),

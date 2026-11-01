@@ -105,7 +105,6 @@ fun EntregasScreen(modifier: Modifier = Modifier) {
             AvisoRecordatorio()
         }
 
-        // El formulario de nueva entrega llega con los recordatorios
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)

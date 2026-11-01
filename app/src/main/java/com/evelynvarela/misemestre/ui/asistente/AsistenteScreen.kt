@@ -54,7 +54,6 @@ import com.evelynvarela.misemestre.ui.theme.Tinta
 
 private data class PasoPlan(val dia: String, val tarea: String, val fondo: Color, val texto: Color)
 
-// Conversación de ejemplo: las respuestas reales llegan con Gemini
 private val planEjemplo = listOf(
     PasoPlan("LUN", "Terminar Firebase y probar login", LilaClaro, Tinta),
     PasoPlan("MAR", "README con diagramas", LilaClaro, Tinta),
@@ -165,7 +164,6 @@ private fun Encabezado() {
 
 @Composable
 private fun BurbujaUsuario(texto: String) {
-    // Alineada a la derecha y sin ocupar todo el ancho
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
         Text(
             text = texto,

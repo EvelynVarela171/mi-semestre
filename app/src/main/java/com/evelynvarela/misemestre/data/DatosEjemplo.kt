@@ -5,7 +5,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-// Datos de mentira para ver las pantallas. Se van reemplazando por los reales.
 
 data class PerfilEjemplo(
     val nombre: String,
@@ -16,19 +15,6 @@ data class PerfilEjemplo(
 )
 
 val perfilEjemplo = PerfilEjemplo("Evelyn", "EV", "estudiante@correo.com", "UCN", "2026-2")
-
-data class NotaEjemplo(val nombre: String, val peso: Int, val valor: Double?)
-
-val notasEjemplo = listOf(
-    NotaEjemplo("Foro temático", 20, 4.6),
-    NotaEjemplo("Cátedra académica", 20, 5.0),
-    NotaEjemplo("Actividad 2", 20, null),
-    NotaEjemplo("Taller ABP", 20, null),
-    NotaEjemplo("Sustentación", 20, null)
-)
-
-// Lo que debe dar la calculadora para cada meta
-val necesitasEjemplo = mapOf(3.0 to "1.8", 3.5 to "2.6", 4.0 to "3.5", 4.5 to "4.3")
 
 data class EntregaEjemplo(
     val id: Int,

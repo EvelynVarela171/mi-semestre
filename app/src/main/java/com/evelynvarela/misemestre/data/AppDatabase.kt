@@ -5,9 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Materia::class], version = 1)
+@Database(entities = [Materia::class, Nota::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun materiaDao(): MateriaDao
+    abstract fun notaDao(): NotaDao
 
     companion object {
         @Volatile
@@ -19,7 +20,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "mi_semestre.db"
-                ).build().also { instancia = it }
+                ).fallbackToDestructiveMigration(dropAllTables = true)
+                    .build().also { instancia = it }
             }
         }
     }

@@ -46,8 +46,6 @@ private val Cupula = Color(0xFFC9B8FD)
 private val Borde = Color(0xFFB9A6FB)
 private val Estrella = Color(0xFFFFE27A)
 
-// Lumi dibujada por partes: así cada parte se puede mover por separado.
-// Usa las mismas coordenadas del prototipo (de 20 a 140 en cada eje).
 @Composable
 fun LumiAnimada(
     cara: CaraLumi,
@@ -79,7 +77,6 @@ fun LumiAnimada(
         label = "tapar"
     )
 
-    // Con los ojos tapados, abre un huequito entre las cintas para espiar
     val espiando = remember { Animatable(0f) }
     var espiaDerecha by remember { mutableStateOf(true) }
     LaunchedEffect(tapandoOjos) {
@@ -93,7 +90,6 @@ fun LumiAnimada(
         }
     }
 
-    // Parpadea cada cierto tiempo: 1 = ojos abiertos
     val ojos = remember { Animatable(1f) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -125,7 +121,6 @@ fun LumiAnimada(
                 dibujarCinta(Menta, 104f, 4.5f, onda, saludo, manito, tapar, 95.6f + huecoDerecho)
             }
 
-            // Colgando van detrás de Lumi; para tapar los ojos pasan por delante
             if (tapar == 0f) cintas()
 
             drawPath(domo, Cupula)
@@ -186,15 +181,12 @@ private fun DrawScope.dibujarCinta(
     val cinta = Path()
     for (i in 0..14) {
         val t = i / 14f
-        // Cinta colgando: se ondula más hacia la punta
         val xCuelga = x + sin(onda + fase + t * 5f) * (1.5f + 5f * t)
         val yCuelga = 94f + 40f * t
-        // Cinta levantada para saludar: la punta se mueve de lado a lado
         val xBrazo = 112f + 26f * t + manito * 7f * t * t
         val yBrazo = 88f - 34f * t * t
         val puntoX = xCuelga + (xBrazo - xCuelga) * saludo
         val puntoY = yCuelga + (yBrazo - yCuelga) * saludo
-        // Cinta subiendo hasta tapar el ojo
         val xOjo = x + (ojoX - x) * t
         val yOjo = 94f - 34f * t
         val finalX = puntoX + (xOjo - puntoX) * tapar
