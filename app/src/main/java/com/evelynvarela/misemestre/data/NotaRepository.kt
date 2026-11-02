@@ -4,6 +4,8 @@ class NotaRepository(
     private val dao: NotaDao,
     private val nube: NubeRepository = NubeRepository()
 ) {
+    val todas = dao.verTodas()
+
     fun notas(materiaId: String) = dao.verDeMateria(materiaId)
 
     suspend fun agregar(nota: Nota) {

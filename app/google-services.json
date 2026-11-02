@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "767804945992",
-    "project_id": "mi-semestre-c6c00",
-    "storage_bucket": "mi-semestre-c6c00.firebasestorage.app"
+    "project_number": "956822876088",
+    "project_id": "mi-semestre-lumi",
+    "storage_bucket": "mi-semestre-lumi.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:767804945992:android:99a01fd1b884f231ee8a7d",
+        "mobilesdk_app_id": "1:956822876088:android:04b7cfc46039cd9202294d",
         "android_client_info": {
           "package_name": "com.evelynvarela.misemestre"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDp5cGhAaHuUO4LgNyVAOXqQCc_4YVqRMs"
+          "current_key": "AIzaSyAshFT7zdSup46Oprg3tVn6vgUJ5zZTZns"
         }
       ],
       "services": {

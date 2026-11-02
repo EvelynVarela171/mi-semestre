@@ -12,6 +12,9 @@ interface NotaDao {
     @Query("SELECT * FROM notas WHERE materiaId = :materiaId ORDER BY creadaEn")
     fun verDeMateria(materiaId: String): Flow<List<Nota>>
 
+    @Query("SELECT * FROM notas")
+    fun verTodas(): Flow<List<Nota>>
+
     @Query("SELECT * FROM notas WHERE materiaId = :materiaId")
     suspend fun deMateria(materiaId: String): List<Nota>
 

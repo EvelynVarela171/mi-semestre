@@ -6,6 +6,7 @@ import com.evelynvarela.misemestre.data.Sincronizador
 class MiSemestreApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        activarAppCheck()
         Sincronizador.obtener(this).iniciar()
     }
 }

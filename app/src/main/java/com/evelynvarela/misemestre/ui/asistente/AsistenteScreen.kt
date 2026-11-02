@@ -24,8 +24,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,33 +38,50 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
 import com.evelynvarela.misemestre.ui.theme.Bricolage
 import com.evelynvarela.misemestre.ui.theme.DuraznoClaro
 import com.evelynvarela.misemestre.ui.theme.Lila
-import com.evelynvarela.misemestre.ui.theme.LilaClaro
 import com.evelynvarela.misemestre.ui.theme.LilaTinta
 import com.evelynvarela.misemestre.ui.theme.Linea
 import com.evelynvarela.misemestre.ui.theme.MiSemestreTheme
-import com.evelynvarela.misemestre.ui.theme.RosaClaro
 import com.evelynvarela.misemestre.ui.theme.TextoSuave
-import com.evelynvarela.misemestre.ui.theme.Tinta
 
-private data class PasoPlan(val dia: String, val tarea: String, val fondo: Color, val texto: Color)
-
-private val planEjemplo = listOf(
-    PasoPlan("LUN", "Terminar Firebase y probar login", LilaClaro, Tinta),
-    PasoPlan("MAR", "README con diagramas", LilaClaro, Tinta),
-    PasoPlan("MIÉ", "Diapositivas y guion", DuraznoClaro, Color(0xFF5C2200)),
-    PasoPlan("JUE", "Grabar el video de 5 a 10 min", RosaClaro, Color(0xFF7A0F3A))
+private val sugerencias = listOf(
+    "¿Qué debo priorizar esta semana?" to Lila,
+    "¿Cómo voy en mis materias?" to Color(0xFFDCD2F5),
+    "Explícame Room" to Color(0xFFDCD2F5)
 )
 
 @Composable
-fun AsistenteScreen(modifier: Modifier = Modifier) {
+fun AsistenteScreen(
+    modifier: Modifier = Modifier,
+    viewModel: AsistenteViewModel = viewModel()
+) {
+    AsistenteContenido(
+        mensajes = viewModel.mensajes,
+        pensando = viewModel.pensando,
+        onEnviar = viewModel::enviar,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun AsistenteContenido(
+    mensajes: List<Mensaje>,
+    pensando: Boolean,
+    onEnviar: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     var pregunta by remember { mutableStateOf("") }
-    val enviados = remember { mutableStateListOf<String>() }
+    val desplazamiento = rememberScrollState()
+
+    LaunchedEffect(mensajes.size, mensajes.lastOrNull(), pensando) {
+        desplazamiento.animateScrollTo(desplazamiento.maxValue)
+    }
 
     Column(
         modifier = modifier
@@ -74,19 +91,24 @@ fun AsistenteScreen(modifier: Modifier = Modifier) {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Encabezado()
+        Encabezado(pensando)
 
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(desplazamiento),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            BurbujaUsuario("¿Qué debo priorizar esta semana?")
-            BurbujaPlan()
-            Sugerencias()
-            enviados.forEach { BurbujaUsuario(it) }
+            mensajes.forEach { mensaje ->
+                if (mensaje.deLumi) {
+                    BurbujaLumi(mensaje.texto, mensaje.esError)
+                } else {
+                    BurbujaUsuario(mensaje.texto)
+                }
+            }
+            if (pensando) BurbujaLumi("Lumi está pensando...", esError = false)
+            if (mensajes.size == 1) Sugerencias(onEnviar)
         }
 
         Row(
@@ -111,12 +133,10 @@ fun AsistenteScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(52.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Lila)
-                    .clickable {
-                        if (pregunta.isNotBlank()) {
-                            enviados.add(pregunta.trim())
-                            pregunta = ""
-                        }
+                    .background(if (pensando) Linea else Lila)
+                    .clickable(enabled = !pensando) {
+                        onEnviar(pregunta)
+                        pregunta = ""
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -131,7 +151,7 @@ fun AsistenteScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Encabezado() {
+private fun Encabezado(pensando: Boolean) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -142,7 +162,11 @@ private fun Encabezado() {
                 .background(DuraznoClaro, RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center
         ) {
-            LumiAnimada(cara = CaraLumi.Normal, saludando = false, modifier = Modifier.size(44.dp))
+            LumiAnimada(
+                cara = if (pensando) CaraLumi.Sorpresa else CaraLumi.Normal,
+                saludando = pensando,
+                modifier = Modifier.size(44.dp)
+            )
         }
         Column {
             Text(
@@ -178,57 +202,34 @@ private fun BurbujaUsuario(texto: String) {
 }
 
 @Composable
-private fun BurbujaPlan() {
-    Column(
+private fun BurbujaLumi(texto: String, esError: Boolean) {
+    Text(
+        text = texto,
+        color = if (esError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
             .fillMaxWidth(0.92f)
+            .wrapContentWidth(Alignment.Start)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(22.dp, 22.dp, 22.dp, 6.dp))
             .border(1.5.dp, Linea, RoundedCornerShape(22.dp, 22.dp, 22.dp, 6.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text("Tienes 2 entregas el 16 de noviembre. Te propongo esto:")
-
-        planEjemplo.forEach { paso ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = paso.dia,
-                    color = paso.texto,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .background(paso.fondo, RoundedCornerShape(10.dp))
-                        .padding(horizontal = 8.dp, vertical = 5.dp)
-                )
-                Text(paso.tarea, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Text(
-            text = "Basado en tus entregas guardadas",
-            color = TextoSuave,
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.bodySmall
-        )
-    }
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Sugerencias() {
+private fun Sugerencias(onEnviar: (String) -> Unit) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        listOf("Pásalo a mis entregas" to Lila, "Explícame Room" to Color(0xFFDCD2F5)).forEach { (texto, borde) ->
+        sugerencias.forEach { (texto, borde) ->
             Text(
                 text = texto,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
+                    .clip(RoundedCornerShape(50))
                     .border(2.dp, borde, RoundedCornerShape(50))
+                    .clickable { onEnviar(texto) }
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             )
         }
@@ -239,6 +240,10 @@ private fun Sugerencias() {
 @Composable
 fun AsistentePreview() {
     MiSemestreTheme {
-        AsistenteScreen()
+        AsistenteContenido(
+            mensajes = listOf(Mensaje("¡Hola! ¿En qué te ayudo hoy?", deLumi = true)),
+            pensando = false,
+            onEnviar = {}
+        )
     }
 }
