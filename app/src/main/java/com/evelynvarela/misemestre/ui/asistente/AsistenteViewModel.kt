@@ -9,11 +9,11 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.evelynvarela.misemestre.data.AppDatabase
+import com.evelynvarela.misemestre.data.EntregaRepository
 import com.evelynvarela.misemestre.data.LumiRepository
 import com.evelynvarela.misemestre.data.MateriaRepository
 import com.evelynvarela.misemestre.data.NotaRepository
 import com.evelynvarela.misemestre.data.contextoParaLumi
-import com.evelynvarela.misemestre.data.entregasEjemplo
 import com.google.firebase.ai.type.FirebaseAIException
 import com.google.firebase.ai.type.QuotaExceededException
 import kotlinx.coroutines.flow.first
@@ -28,6 +28,7 @@ class AsistenteViewModel(application: Application) : AndroidViewModel(applicatio
     private val base = AppDatabase.obtener(application)
     private val materias = MateriaRepository(base.materiaDao(), base.notaDao())
     private val notas = NotaRepository(base.notaDao())
+    private val entregas = EntregaRepository(base.entregaDao())
     private val lumi = LumiRepository()
 
     val mensajes = mutableStateListOf(
@@ -51,7 +52,7 @@ class AsistenteViewModel(application: Application) : AndroidViewModel(applicatio
                     hoy = LocalDate.now(),
                     materias = materias.materias.first(),
                     notas = notas.todas.first(),
-                    entregas = entregasEjemplo
+                    entregas = entregas.entregas.first()
                 )
                 lumi.responder(pregunta.trim(), contexto).collect { parte ->
                     if (respuesta.isEmpty()) {

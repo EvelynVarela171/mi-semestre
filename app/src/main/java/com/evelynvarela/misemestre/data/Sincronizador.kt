@@ -25,6 +25,7 @@ fun estadoDe(hayPendientes: Boolean, soloCache: Boolean): EstadoNube = when {
 class Sincronizador private constructor(context: Context) {
 
     private val dao = AppDatabase.obtener(context).sincronizacionDao()
+    private val enlace = EnlaceCalendario(context)
     private val auth = Firebase.auth
     private val firestore = Firebase.firestore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
@@ -36,6 +37,7 @@ class Sincronizador private constructor(context: Context) {
     private var escuchas: List<ListenerRegistration> = emptyList()
     private var materias: QuerySnapshot? = null
     private var notas: QuerySnapshot? = null
+    private var entregas: QuerySnapshot? = null
 
     fun iniciar() {
         auth.addAuthStateListener { cuenta ->
@@ -44,7 +46,10 @@ class Sincronizador private constructor(context: Context) {
             val habiaSesion = uidActual != null
             detener()
             uidActual = uid
-            if (habiaSesion) scope.launch { dao.borrarTodo() }
+            if (habiaSesion) {
+                enlace.olvidar()
+                scope.launch { dao.borrarTodo() }
+            }
             if (uid != null) escuchar(uid)
         }
     }
@@ -67,6 +72,14 @@ class Sincronizador private constructor(context: Context) {
                         notas = datos
                         aplicar()
                     }
+                },
+            usuario.collection("entregas")
+                .addSnapshotListener(MetadataChanges.INCLUDE) { datos, error ->
+                    if (error != null) _estado.value = EstadoNube.SinConexion
+                    if (datos != null) {
+                        entregas = datos
+                        aplicar()
+                    }
                 }
         )
     }
@@ -74,14 +87,19 @@ class Sincronizador private constructor(context: Context) {
     private fun aplicar() {
         val datosMaterias = materias ?: return
         val datosNotas = notas ?: return
+        val datosEntregas = entregas ?: return
         _estado.value = estadoDe(
             hayPendientes = datosMaterias.metadata.hasPendingWrites() ||
-                datosNotas.metadata.hasPendingWrites(),
-            soloCache = datosMaterias.metadata.isFromCache || datosNotas.metadata.isFromCache
+                datosNotas.metadata.hasPendingWrites() ||
+                datosEntregas.metadata.hasPendingWrites(),
+            soloCache = datosMaterias.metadata.isFromCache ||
+                datosNotas.metadata.isFromCache ||
+                datosEntregas.metadata.isFromCache
         )
         val listaMaterias = datosMaterias.documents.mapNotNull { it.aMateria() }
         val listaNotas = datosNotas.documents.mapNotNull { it.aNota() }
-        scope.launch { dao.reemplazar(listaMaterias, listaNotas) }
+        val listaEntregas = datosEntregas.documents.mapNotNull { it.aEntrega() }
+        scope.launch { dao.reemplazar(listaMaterias, listaNotas, listaEntregas) }
     }
 
     private fun detener() {
@@ -89,6 +107,7 @@ class Sincronizador private constructor(context: Context) {
         escuchas = emptyList()
         materias = null
         notas = null
+        entregas = null
         _estado.value = EstadoNube.Conectando
     }
 

@@ -10,31 +10,19 @@ data class PerfilEjemplo(val universidad: String, val semestre: String)
 
 val perfilEjemplo = PerfilEjemplo("UCN", "2026-2")
 
-data class EntregaEjemplo(
-    val id: Int,
-    val nombre: String,
-    val materia: String,
-    val fecha: LocalDate,
-    val entregada: Boolean = false,
-    val urgente: Boolean = false
-)
-
-val entregasEjemplo = listOf(
-    EntregaEjemplo(0, "Taller ABP · GitHub", "Apps móviles", LocalDate.of(2026, 11, 16), urgente = true),
-    EntregaEjemplo(1, "Video de sustentación", "Apps móviles", LocalDate.of(2026, 11, 16)),
-    EntregaEjemplo(2, "Diapositivas del proyecto", "Apps móviles", LocalDate.of(2026, 11, 15)),
-    EntregaEjemplo(3, "Infografía Actividad 2", "Apps móviles", LocalDate.of(2026, 10, 28), entregada = true)
-)
-
 fun textoFecha(fecha: LocalDate): String {
     val formato = DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es"))
     return fecha.format(formato).replace(".", "")
 }
 
 fun textoDias(fecha: LocalDate): String {
-    return when (val dias = ChronoUnit.DAYS.between(LocalDate.now(), fecha)) {
-        0L -> "Hoy"
-        1L -> "Mañana"
+    val dias = ChronoUnit.DAYS.between(LocalDate.now(), fecha)
+    return when {
+        dias < 0L -> "Vencida"
+        dias == 0L -> "Hoy"
+        dias == 1L -> "Mañana"
         else -> "$dias días"
     }
 }
+
+fun esUrgente(fecha: LocalDate): Boolean = ChronoUnit.DAYS.between(LocalDate.now(), fecha) <= 3L

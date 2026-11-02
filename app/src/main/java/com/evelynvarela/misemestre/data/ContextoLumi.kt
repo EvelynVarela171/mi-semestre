@@ -7,7 +7,7 @@ fun contextoParaLumi(
     hoy: LocalDate,
     materias: List<Materia>,
     notas: List<Nota>,
-    entregas: List<EntregaEjemplo>
+    entregas: List<Entrega>
 ): String {
     val lineasMaterias = materias.map { materia ->
         val propias = notas.filter { it.materiaId == materia.id }
@@ -30,7 +30,8 @@ fun contextoParaLumi(
         .sortedBy { it.fecha }
         .map { entrega ->
             val dias = ChronoUnit.DAYS.between(hoy, entrega.fecha)
-            "- ${entrega.nombre} de ${entrega.materia}: ${entrega.fecha}, faltan $dias días"
+            val plazo = if (dias < 0) "venció hace ${-dias} días" else "faltan $dias días"
+            "- ${entrega.nombre} de ${entrega.materia}: ${entrega.fecha}, $plazo"
         }
 
     return buildString {

@@ -1,6 +1,7 @@
 package com.evelynvarela.misemestre
 
 import android.app.Application
+import com.evelynvarela.misemestre.data.Recordatorios
 import com.evelynvarela.misemestre.data.Sincronizador
 
 class MiSemestreApp : Application() {
@@ -8,5 +9,6 @@ class MiSemestreApp : Application() {
         super.onCreate()
         activarAppCheck()
         Sincronizador.obtener(this).iniciar()
+        Recordatorios.programar(this)
     }
 }

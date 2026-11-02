@@ -1,6 +1,6 @@
 package com.evelynvarela.misemestre
 
-import com.evelynvarela.misemestre.data.EntregaEjemplo
+import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.data.Nota
 import com.evelynvarela.misemestre.data.contextoParaLumi
@@ -30,13 +30,23 @@ class ContextoLumiTest {
     @Test
     fun soloMuestraEntregasPendientesConSusDias() {
         val entregas = listOf(
-            EntregaEjemplo(0, "Taller ABP", "Apps móviles", LocalDate.of(2026, 11, 16)),
-            EntregaEjemplo(1, "Infografía", "Apps móviles", LocalDate.of(2026, 10, 28), entregada = true)
+            Entrega(nombre = "Taller ABP", materia = "Apps móviles", fecha = LocalDate.of(2026, 11, 16)),
+            Entrega(nombre = "Infografía", materia = "Apps móviles", fecha = LocalDate.of(2026, 10, 28), entregada = true)
         )
         val contexto = contextoParaLumi(hoy, emptyList(), emptyList(), entregas)
 
         assertTrue(contexto.contains("Taller ABP de Apps móviles: 2026-11-16, faltan 14 días"))
         assertFalse(contexto.contains("Infografía"))
+    }
+
+    @Test
+    fun avisaCuandoUnaEntregaYaVencio() {
+        val entregas = listOf(
+            Entrega(nombre = "Quiz", materia = "Apps móviles", fecha = LocalDate.of(2026, 10, 30))
+        )
+        val contexto = contextoParaLumi(hoy, emptyList(), emptyList(), entregas)
+
+        assertTrue(contexto.contains("venció hace 3 días"))
     }
 
     @Test

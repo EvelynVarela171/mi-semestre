@@ -7,6 +7,9 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import java.time.LocalDate
+
+private const val TAMANO_LOTE = 400
 
 class NubeRepository(
     private val auth: FirebaseAuth = Firebase.auth,
@@ -30,6 +33,41 @@ class NubeRepository(
                 "creadaEn" to nota.creadaEn
             )
         )
+    }
+
+    fun guardar(entrega: Entrega) {
+        cuenta()?.collection("entregas")?.document(entrega.id)?.set(datosDe(entrega))
+    }
+
+    fun guardar(entregas: List<Entrega>) {
+        val coleccion = cuenta()?.collection("entregas") ?: return
+        entregas.chunked(TAMANO_LOTE).forEach { lote ->
+            firestore.batch().apply {
+                lote.forEach { set(coleccion.document(it.id), datosDe(it)) }
+            }.commit()
+        }
+    }
+
+    private fun datosDe(entrega: Entrega) = mapOf(
+        "nombre" to entrega.nombre,
+        "materia" to entrega.materia,
+        "fecha" to entrega.fecha.toString(),
+        "entregada" to entrega.entregada,
+        "importada" to entrega.importada,
+        "oculta" to entrega.oculta
+    )
+
+    fun borrar(entrega: Entrega) {
+        cuenta()?.collection("entregas")?.document(entrega.id)?.delete()
+    }
+
+    fun borrar(entregas: List<Entrega>) {
+        val coleccion = cuenta()?.collection("entregas") ?: return
+        entregas.chunked(TAMANO_LOTE).forEach { lote ->
+            firestore.batch().apply {
+                lote.forEach { delete(coleccion.document(it.id)) }
+            }.commit()
+        }
     }
 
     fun borrar(nota: Nota) {
@@ -62,5 +100,22 @@ fun DocumentSnapshot.aNota(): Nota? {
         peso = peso,
         valor = getDouble("valor"),
         creadaEn = getLong("creadaEn") ?: 0L
+    )
+}
+
+fun DocumentSnapshot.aEntrega(): Entrega? {
+    val nombre = getString("nombre") ?: return null
+    val materia = getString("materia") ?: return null
+    val fecha = getString("fecha")
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        ?: return null
+    return Entrega(
+        id = id,
+        nombre = nombre,
+        materia = materia,
+        fecha = fecha,
+        entregada = getBoolean("entregada") ?: false,
+        importada = getBoolean("importada") ?: false,
+        oculta = getBoolean("oculta") ?: false
     )
 }

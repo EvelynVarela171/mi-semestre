@@ -38,11 +38,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
-import com.evelynvarela.misemestre.data.EntregaEjemplo
+import com.evelynvarela.misemestre.data.CalculadoraNotas
+import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.EstadoNube
 import com.evelynvarela.misemestre.data.Materia
+import com.evelynvarela.misemestre.data.ResumenSemestre
 import com.evelynvarela.misemestre.data.Usuario
-import com.evelynvarela.misemestre.data.entregasEjemplo
 import com.evelynvarela.misemestre.data.textoDias
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
@@ -77,11 +78,15 @@ fun InicioScreen(
 ) {
     val materias by viewModel.materias.collectAsState()
     val estadoNube by viewModel.estadoNube.collectAsState()
+    val resumen by viewModel.resumen.collectAsState()
+    val entregas by viewModel.entregas.collectAsState()
 
     InicioContenido(
         usuario = viewModel.usuario,
         estadoNube = estadoNube,
         materias = materias,
+        resumen = resumen,
+        entregas = entregas,
         onAbrirMateria = onAbrirMateria,
         onVerMaterias = onVerMaterias,
         onVerEntregas = onVerEntregas,
@@ -96,6 +101,8 @@ private fun InicioContenido(
     usuario: Usuario,
     estadoNube: EstadoNube,
     materias: List<Materia>?,
+    resumen: ResumenSemestre,
+    entregas: List<Entrega>,
     onAbrirMateria: (String) -> Unit,
     onVerMaterias: () -> Unit,
     onVerEntregas: () -> Unit,
@@ -103,6 +110,10 @@ private fun InicioContenido(
     onVerPerfil: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val proxima = entregas
+        .filterNot { it.entregada || it.fecha.isBefore(LocalDate.now()) }
+        .minByOrNull { it.fecha }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -132,12 +143,9 @@ private fun InicioContenido(
         ) {
             Encabezado(usuario, onVerPerfil)
             ChipNube(estadoNube)
-            TarjetaPromedio()
+            TarjetaPromedio(resumen)
             SeccionMaterias(materias, onAbrirMateria, onVerMaterias)
-            entregasEjemplo
-                .filterNot { it.entregada }
-                .minByOrNull { it.fecha }
-                ?.let { SeccionLoQueViene(it, onVerEntregas) }
+            proxima?.let { SeccionLoQueViene(it, onVerEntregas) }
             TarjetaLumi(onVerAsistente)
         }
     }
@@ -206,7 +214,7 @@ private fun ChipNube(estado: EstadoNube) {
 }
 
 @Composable
-private fun TarjetaPromedio() {
+private fun TarjetaPromedio(resumen: ResumenSemestre) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -217,7 +225,7 @@ private fun TarjetaPromedio() {
         Column(Modifier.weight(1f)) {
             Text("Tu semestre va en", fontWeight = FontWeight.Bold, color = LilaOscuro)
             Text(
-                text = "4.2",
+                text = resumen.promedio?.let(CalculadoraNotas::formato) ?: "—",
                 fontFamily = Bricolage,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 44.sp,
@@ -225,12 +233,16 @@ private fun TarjetaPromedio() {
                 color = LilaTinta
             )
             Text(
-                text = "promedio · meta 4.5",
+                text = if (resumen.promedio == null) {
+                    "Agrega tus notas para verlo"
+                } else {
+                    "promedio por créditos · ${resumen.avance}% evaluado"
+                },
                 color = LilaOscuro,
                 style = MaterialTheme.typography.bodySmall
             )
         }
-        ProgresoSemestre(progreso = 0.78f)
+        ProgresoSemestre(progreso = resumen.avance / 100f)
     }
 }
 
@@ -337,7 +349,7 @@ private fun SeccionMaterias(
 }
 
 @Composable
-private fun SeccionLoQueViene(entrega: EntregaEjemplo, onVerEntregas: () -> Unit) {
+private fun SeccionLoQueViene(entrega: Entrega, onVerEntregas: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         EncabezadoSeccion("Lo que viene", "Ver todo", onVerEntregas)
 
@@ -437,6 +449,8 @@ fun InicioPreview() {
                 Materia(id = "1", nombre = "Apps móviles", creditos = 3),
                 Materia(id = "2", nombre = "Bases de datos", creditos = 3)
             ),
+            resumen = ResumenSemestre(4.2, 40),
+            entregas = emptyList(),
             onAbrirMateria = {},
             onVerMaterias = {},
             onVerEntregas = {},

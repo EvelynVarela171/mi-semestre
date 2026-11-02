@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
-import com.evelynvarela.misemestre.data.entregasEjemplo
 import com.evelynvarela.misemestre.data.Usuario
 import com.evelynvarela.misemestre.data.perfilEjemplo
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
@@ -98,11 +97,13 @@ fun PerfilScreen(
     viewModel: InicioViewModel = viewModel()
 ) {
     val materias by viewModel.materias.collectAsState()
+    val entregas by viewModel.entregas.collectAsState()
     var confirmando by remember { mutableStateOf(false) }
 
     PerfilContenido(
         usuario = viewModel.usuario,
         totalMaterias = materias.orEmpty().size,
+        entregasListas = entregas.count { it.entregada },
         onVolver = onVolver,
         onCerrarSesion = { confirmando = true },
         modifier = modifier
@@ -144,11 +145,11 @@ fun PerfilScreen(
 private fun PerfilContenido(
     usuario: Usuario,
     totalMaterias: Int,
+    entregasListas: Int,
     onVolver: () -> Unit,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val entregasListas = entregasEjemplo.count { it.entregada }
     val puntos = totalMaterias * 10 + entregasListas * 20
     val nivel = niveles.indexOfLast { puntos >= it.desde }
     val logros = listOf(
@@ -434,6 +435,7 @@ fun PerfilPreview() {
         PerfilContenido(
             usuario = Usuario("Evelyn Varela", "estudiante@correo.com"),
             totalMaterias = 2,
+            entregasListas = 1,
             onVolver = {},
             onCerrarSesion = {}
         )
