@@ -12,29 +12,45 @@ import com.evelynvarela.misemestre.data.CalendarioRepository
 import com.evelynvarela.misemestre.data.EnlaceCalendario
 import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.EntregaRepository
+import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.data.MateriaRepository
+import com.evelynvarela.misemestre.data.materiasSinCrear
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.time.LocalDate
 
+private const val ERROR_AL_ACTUALIZAR =
+    "Hoy no pude actualizar. Tu calendario sigue conectado; prueba más tarde."
+
 class EntregasViewModel(application: Application) : AndroidViewModel(application) {
 
     private val base = AppDatabase.obtener(application)
     private val repositorio = EntregaRepository(base.entregaDao())
-    private val calendario = CalendarioRepository(repositorio, EnlaceCalendario(application))
+    private val repositorioMaterias = MateriaRepository(base.materiaDao(), base.notaDao())
+    private val enlace = EnlaceCalendario(application)
+    private val calendario = CalendarioRepository(repositorio, enlace)
+    private val ignoradas = MutableStateFlow(enlace.materiasIgnoradas)
 
     val entregas = repositorio.entregas.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         null
     )
-    val materias = MateriaRepository(base.materiaDao(), base.notaDao()).materias.stateIn(
+    val materias = repositorioMaterias.materias.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         emptyList()
     )
+    val materiasSugeridas = combine(
+        repositorio.entregas,
+        repositorioMaterias.materias,
+        ignoradas,
+        ::materiasSinCrear
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     var conectado by mutableStateOf(calendario.conectado)
         private set
@@ -51,6 +67,14 @@ class EntregasViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun editar(entrega: Entrega, nombre: String, materia: String, fecha: LocalDate) {
+        viewModelScope.launch {
+            repositorio.guardar(
+                entrega.copy(nombre = nombre, materia = materia, fecha = fecha, editada = true)
+            )
+        }
+    }
+
     fun cambiar(entrega: Entrega) {
         viewModelScope.launch {
             repositorio.guardar(entrega.copy(entregada = !entrega.entregada))
@@ -59,6 +83,20 @@ class EntregasViewModel(application: Application) : AndroidViewModel(application
 
     fun borrar(entrega: Entrega) {
         viewModelScope.launch { repositorio.borrar(entrega) }
+    }
+
+    fun crearMaterias(creditos: Map<String, Int>) {
+        viewModelScope.launch {
+            creditos.forEach { (nombre, valor) ->
+                repositorioMaterias.agregar(Materia(nombre = nombre, creditos = valor))
+            }
+        }
+    }
+
+    fun ignorarMaterias(nombres: List<String>) {
+        val nuevas = enlace.materiasIgnoradas + nombres
+        enlace.materiasIgnoradas = nuevas
+        ignoradas.value = nuevas
     }
 
     fun limpiarError() {
@@ -75,12 +113,15 @@ class EntregasViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun actualizar() {
+        enlace.materiasIgnoradas = emptySet()
+        ignoradas.value = emptySet()
         importar { calendario.actualizar() }
     }
 
     fun desconectar() {
         viewModelScope.launch {
             calendario.desconectar()
+            ignoradas.value = emptySet()
             conectado = false
             mensaje = null
         }
@@ -99,9 +140,13 @@ class EntregasViewModel(application: Application) : AndroidViewModel(application
                     else -> "$cambios entregas nuevas o actualizadas"
                 }
             } catch (_: CalendarioInvalido) {
-                error = "Ese enlace no parece ser de un calendario."
+                error = if (conectado) ERROR_AL_ACTUALIZAR else "Ese enlace no parece ser de un calendario."
             } catch (_: IOException) {
-                error = "No pude leer el calendario. Revisa el enlace y tu internet."
+                error = if (conectado) {
+                    ERROR_AL_ACTUALIZAR
+                } else {
+                    "No pude leer el calendario. Revisa el enlace y tu internet."
+                }
             } finally {
                 ocupado = false
             }

@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Materia::class, Nota::class, Entrega::class], version = 4)
+@Database(entities = [Materia::class, Nota::class, Entrega::class], version = 5)
 @TypeConverters(Convertidores::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun materiaDao(): MateriaDao

@@ -3,11 +3,15 @@ package com.evelynvarela.misemestre
 import com.evelynvarela.misemestre.data.CalendarioInvalido
 import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.EventoCalendario
+import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.data.cambiosDeCalendario
+import com.evelynvarela.misemestre.data.enlaceDeOtraCuenta
 import com.evelynvarela.misemestre.data.idDeEvento
 import com.evelynvarela.misemestre.data.leerCalendario
+import com.evelynvarela.misemestre.data.materiasSinCrear
 import com.evelynvarela.misemestre.data.normalizarEnlace
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -130,6 +134,35 @@ class CalendarioTest {
     }
 
     @Test
+    fun respetaLasEdicionesDelUsuario() {
+        val editada = Entrega(
+            id = idDeEvento("uid"),
+            nombre = "Mi nombre",
+            materia = "Apps",
+            fecha = hoy.plusDays(4),
+            importada = true,
+            editada = true
+        )
+        val evento = EventoCalendario("uid", "Taller", "Apps", hoy.plusDays(5))
+
+        assertTrue(cambiosDeCalendario(listOf(editada), listOf(evento), hoy).isEmpty())
+    }
+
+    @Test
+    fun sugiereSoloMateriasNuevasDelCalendario() {
+        val entregas = listOf(
+            Entrega(nombre = "A", materia = "Física", fecha = hoy, importada = true),
+            Entrega(nombre = "B", materia = "Cálculo", fecha = hoy, importada = true),
+            Entrega(nombre = "C", materia = "Química", fecha = hoy, importada = true),
+            Entrega(nombre = "D", materia = "Calendario", fecha = hoy, importada = true),
+            Entrega(nombre = "E", materia = "Manual", fecha = hoy)
+        )
+        val materias = listOf(Materia(nombre = "cálculo", creditos = 3))
+
+        assertEquals(listOf("Física"), materiasSinCrear(entregas, materias, setOf("Química")))
+    }
+
+    @Test
     fun noRepiteNiDevuelveLoQueYaEstaOculto() {
         val oculta = Entrega(
             id = idDeEvento("uid"),
@@ -142,5 +175,16 @@ class CalendarioTest {
         val evento = EventoCalendario("uid", "Taller", "Apps", hoy.plusDays(3))
 
         assertTrue(cambiosDeCalendario(listOf(oculta), listOf(evento), hoy).isEmpty())
+    }
+
+    @Test
+    fun elEnlaceSeConservaConLaMismaCuenta() {
+        assertFalse(enlaceDeOtraCuenta("ana", "ana"))
+        assertFalse(enlaceDeOtraCuenta(null, "ana"))
+    }
+
+    @Test
+    fun elEnlaceSeOlvidaConOtraCuenta() {
+        assertTrue(enlaceDeOtraCuenta("ana", "luis"))
     }
 }

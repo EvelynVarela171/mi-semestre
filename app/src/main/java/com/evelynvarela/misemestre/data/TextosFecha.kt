@@ -5,11 +5,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-
-data class PerfilEjemplo(val universidad: String, val semestre: String)
-
-val perfilEjemplo = PerfilEjemplo("UCN", "2026-2")
-
 fun textoFecha(fecha: LocalDate): String {
     val formato = DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es"))
     return fecha.format(formato).replace(".", "")

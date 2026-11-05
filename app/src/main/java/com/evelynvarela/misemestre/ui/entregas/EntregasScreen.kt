@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,12 +34,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,7 +68,11 @@ import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.esUrgente
 import com.evelynvarela.misemestre.data.textoDias
 import com.evelynvarela.misemestre.data.textoFecha
+import com.evelynvarela.misemestre.ui.componentes.CaraLumi
+import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
 import com.evelynvarela.misemestre.ui.componentes.Pildora
+import com.evelynvarela.misemestre.ui.componentes.Reaccion
+import com.evelynvarela.misemestre.ui.componentes.ReaccionLumi
 import com.evelynvarela.misemestre.ui.theme.Bricolage
 import com.evelynvarela.misemestre.ui.theme.DuraznoClaro
 import com.evelynvarela.misemestre.ui.theme.Fucsia
@@ -80,6 +90,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 private val ColorDurazno = Color(0xFF5C2200)
+private val felicitaciones = listOf("¡Una menos!", "¡Bien hecho!", "¡Lo lograste!", "¡Sigue así!")
 
 @Composable
 fun EntregasScreen(
@@ -88,11 +99,15 @@ fun EntregasScreen(
 ) {
     val entregas by viewModel.entregas.collectAsState()
     val materias by viewModel.materias.collectAsState()
+    val sugeridas by viewModel.materiasSugeridas.collectAsState()
 
     var agregando by remember { mutableStateOf(false) }
+    var entregaEditada by remember { mutableStateOf<Entrega?>(null) }
     var conectando by remember { mutableStateOf(false) }
     var desconectando by remember { mutableStateOf(false) }
+    var creandoMaterias by remember { mutableStateOf(false) }
     var entregaPorBorrar by remember { mutableStateOf<Entrega?>(null) }
+    var reaccion by remember { mutableStateOf<Reaccion?>(null) }
 
     val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val pedirPermiso = {
@@ -101,32 +116,73 @@ fun EntregasScreen(
         }
     }
 
-    EntregasContenido(
-        entregas = entregas.orEmpty(),
-        calendarioConectado = viewModel.conectado,
-        ocupado = viewModel.ocupado,
-        mensaje = viewModel.mensaje,
-        error = viewModel.error.takeUnless { conectando },
-        onAgregar = { agregando = true },
-        onCambiar = viewModel::cambiar,
-        onBorrar = { entregaPorBorrar = it },
-        onConectar = {
-            viewModel.limpiarError()
-            conectando = true
-        },
-        onActualizar = viewModel::actualizar,
-        onDesconectar = { desconectando = true },
-        modifier = modifier
-    )
+    Box(modifier.fillMaxSize()) {
+        EntregasContenido(
+            entregas = entregas.orEmpty(),
+            calendarioConectado = viewModel.conectado,
+            ocupado = viewModel.ocupado,
+            mensaje = viewModel.mensaje,
+            error = viewModel.error.takeUnless { conectando },
+            materiasNuevas = sugeridas.size,
+            onAgregar = { agregando = true },
+            onEditar = { entregaEditada = it },
+            onCambiar = { entrega ->
+                viewModel.cambiar(entrega)
+                if (!entrega.entregada) {
+                    val quedan = entregas.orEmpty().count { !it.entregada } - 1
+                    reaccion = Reaccion(
+                        cara = CaraLumi.Feliz,
+                        mensaje = if (quedan == 0) "¡Terminaste todo!" else felicitaciones.random()
+                    )
+                }
+            },
+            onBorrar = { entregaPorBorrar = it },
+            onConectar = {
+                viewModel.limpiarError()
+                conectando = true
+            },
+            onActualizar = viewModel::actualizar,
+            onDesconectar = { desconectando = true },
+            onCrearMaterias = { creandoMaterias = true }
+        )
+        ReaccionLumi(reaccion, onTerminar = { reaccion = null })
+    }
 
     if (agregando) {
-        DialogoNuevaEntrega(
+        DialogoEntrega(
+            entrega = null,
             materias = materias.map { it.nombre },
             onCancelar = { agregando = false },
             onGuardar = { nombre, materia, fecha ->
                 agregando = false
                 viewModel.agregar(nombre, materia, fecha)
                 pedirPermiso()
+            }
+        )
+    }
+
+    entregaEditada?.let { entrega ->
+        DialogoEntrega(
+            entrega = entrega,
+            materias = materias.map { it.nombre },
+            onCancelar = { entregaEditada = null },
+            onGuardar = { nombre, materia, fecha ->
+                entregaEditada = null
+                viewModel.editar(entrega, nombre, materia, fecha)
+            }
+        )
+    }
+
+    if (creandoMaterias) {
+        DialogoCrearMaterias(
+            materias = sugeridas,
+            onAhoraNo = {
+                creandoMaterias = false
+                viewModel.ignorarMaterias(sugeridas)
+            },
+            onCrear = { creditos ->
+                creandoMaterias = false
+                viewModel.crearMaterias(creditos)
             }
         )
     }
@@ -200,15 +256,19 @@ private fun EntregasContenido(
     ocupado: Boolean,
     mensaje: String?,
     error: String?,
+    materiasNuevas: Int,
     onAgregar: () -> Unit,
+    onEditar: (Entrega) -> Unit,
     onCambiar: (Entrega) -> Unit,
     onBorrar: (Entrega) -> Unit,
     onConectar: () -> Unit,
     onActualizar: () -> Unit,
     onDesconectar: () -> Unit,
+    onCrearMaterias: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var verEntregadas by remember { mutableStateOf(false) }
+    var diaElegido by remember { mutableStateOf<LocalDate?>(null) }
     val (listas, pendientes) = entregas.partition { it.entregada }
 
     Box(
@@ -230,7 +290,11 @@ private fun EntregasContenido(
                 fontSize = 30.sp
             )
 
-            SemanaActual(pendientes)
+            SemanaActual(
+                pendientes = pendientes,
+                elegido = diaElegido,
+                onElegir = { dia -> diaElegido = dia.takeUnless { it == diaElegido } }
+            )
 
             TarjetaCalendario(
                 conectado = calendarioConectado,
@@ -242,28 +306,55 @@ private fun EntregasContenido(
                 onDesconectar = onDesconectar
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Filtro("Pendientes · ${pendientes.size}", !verEntregadas) { verEntregadas = false }
-                Filtro("Entregadas · ${listas.size}", verEntregadas) { verEntregadas = true }
+            if (materiasNuevas > 0) {
+                TarjetaMateriasNuevas(materiasNuevas, onCrearMaterias)
             }
 
-            val visibles = if (verEntregadas) listas else pendientes
+            val dia = diaElegido
+            if (dia == null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Filtro("Pendientes · ${pendientes.size}", !verEntregadas) { verEntregadas = false }
+                    Filtro("Entregadas · ${listas.size}", verEntregadas) { verEntregadas = true }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Entregas del ${textoFecha(dia)}",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { diaElegido = null }) {
+                        Text("Ver todas", color = LilaOscuro, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            val visibles = when {
+                dia != null -> entregas.filter { it.fecha == dia }
+                verEntregadas -> listas
+                else -> pendientes
+            }
             if (visibles.isEmpty()) {
                 Text(
-                    text = if (verEntregadas) {
-                        "Aún no has marcado entregas."
-                    } else {
-                        "No tienes entregas pendientes."
+                    text = when {
+                        dia != null -> "Ese día no tienes entregas."
+                        verEntregadas -> "Aún no has marcado entregas."
+                        else -> "No tienes entregas pendientes."
                     },
                     color = TextoSuave
                 )
             }
             visibles.forEach { entrega ->
-                FilaEntrega(
-                    entrega = entrega,
-                    onCambiar = { onCambiar(entrega) },
-                    onBorrar = { onBorrar(entrega) }
-                )
+                key(entrega.id) {
+                    FilaDeslizable(entrega, onCambiar = { onCambiar(entrega) }) {
+                        FilaEntrega(
+                            entrega = entrega,
+                            onEditar = { onEditar(entrega) },
+                            onCambiar = { onCambiar(entrega) },
+                            onBorrar = { onBorrar(entrega) }
+                        )
+                    }
+                }
             }
 
             AvisoRecordatorio()
@@ -290,7 +381,11 @@ private fun EntregasContenido(
 }
 
 @Composable
-private fun SemanaActual(pendientes: List<Entrega>) {
+private fun SemanaActual(
+    pendientes: List<Entrega>,
+    elegido: LocalDate?,
+    onElegir: (LocalDate) -> Unit
+) {
     val hoy = LocalDate.now()
     val lunes = hoy.minusDays(hoy.dayOfWeek.value - 1L)
     val letras = listOf("L", "M", "M", "J", "V", "S", "D")
@@ -314,12 +409,18 @@ private fun SemanaActual(pendientes: List<Entrega>) {
                 modifier = Modifier
                     .weight(1f)
                     .height(60.dp)
-                    .background(fondo, RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(fondo)
                     .border(
-                        1.5.dp,
-                        if (dia == hoy || tieneEntrega) fondo else Linea,
+                        if (dia == elegido) 2.5.dp else 1.5.dp,
+                        when {
+                            dia == elegido -> Tinta
+                            dia == hoy || tieneEntrega -> fondo
+                            else -> Linea
+                        },
                         RoundedCornerShape(16.dp)
-                    ),
+                    )
+                    .clickable { onElegir(dia) },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -384,6 +485,71 @@ private fun TarjetaCalendario(
 }
 
 @Composable
+private fun TarjetaMateriasNuevas(cantidad: Int, onCrear: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(DuraznoClaro)
+            .clickable(onClick = onCrear)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        LumiAnimada(cara = CaraLumi.Guino, saludando = false, modifier = Modifier.size(44.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = if (cantidad == 1) "Encontré 1 materia nueva" else "Encontré $cantidad materias nuevas",
+                color = ColorDurazno,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (cantidad == 1) "Toca para agregarla a tus materias" else "Toca para agregarlas a tus materias",
+                color = ColorDurazno,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilaDeslizable(
+    entrega: Entrega,
+    onCambiar: () -> Unit,
+    contenido: @Composable () -> Unit
+) {
+    val estado = rememberSwipeToDismissBoxState(
+        confirmValueChange = { valor ->
+            if (valor == SwipeToDismissBoxValue.StartToEnd) onCambiar()
+            false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = estado,
+        enableDismissFromEndToStart = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Lila, RoundedCornerShape(20.dp))
+                    .padding(start = 22.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = if (entrega.entregada) "Pendiente" else "¡Lista!",
+                    color = LilaTinta,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    ) {
+        contenido()
+    }
+}
+
+@Composable
 private fun Filtro(texto: String, activo: Boolean, onClick: () -> Unit) {
     Text(
         text = texto,
@@ -400,15 +566,22 @@ private fun Filtro(texto: String, activo: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FilaEntrega(entrega: Entrega, onCambiar: () -> Unit, onBorrar: () -> Unit) {
+private fun FilaEntrega(
+    entrega: Entrega,
+    onEditar: () -> Unit,
+    onCambiar: () -> Unit,
+    onBorrar: () -> Unit
+) {
     val hecha = entrega.entregada
     val accion = if (hecha) "Marcar pendiente" else "Marcar lista"
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
             .border(1.5.dp, Linea, RoundedCornerShape(20.dp))
+            .clickable(onClick = onEditar)
             .padding(start = 14.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -492,14 +665,15 @@ private fun AvisoRecordatorio() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DialogoNuevaEntrega(
+private fun DialogoEntrega(
+    entrega: Entrega?,
     materias: List<String>,
     onCancelar: () -> Unit,
     onGuardar: (nombre: String, materia: String, fecha: LocalDate) -> Unit
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var materia by remember { mutableStateOf("") }
-    var fecha by remember { mutableStateOf<LocalDate?>(null) }
+    var nombre by remember { mutableStateOf(entrega?.nombre.orEmpty()) }
+    var materia by remember { mutableStateOf(entrega?.materia.orEmpty()) }
+    var fecha by remember { mutableStateOf(entrega?.fecha) }
     var eligiendoFecha by remember { mutableStateOf(false) }
     val coloresCampo = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -509,7 +683,7 @@ private fun DialogoNuevaEntrega(
     AlertDialog(
         onDismissRequest = onCancelar,
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("Nueva entrega") },
+        title = { Text(if (entrega == null) "Nueva entrega" else "Editar entrega") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -564,6 +738,8 @@ private fun DialogoNuevaEntrega(
 
     if (eligiendoFecha) {
         val estado = rememberDatePickerState(
+            initialSelectedDateMillis = fecha?.takeUnless { it.isBefore(LocalDate.now()) }
+                ?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean =
                     !fechaDeMilis(utcTimeMillis).isBefore(LocalDate.now())
@@ -595,6 +771,59 @@ private fun DialogoNuevaEntrega(
 
 private fun fechaDeMilis(milis: Long): LocalDate =
     Instant.ofEpochMilli(milis).atZone(ZoneOffset.UTC).toLocalDate()
+
+@Composable
+private fun DialogoCrearMaterias(
+    materias: List<String>,
+    onAhoraNo: () -> Unit,
+    onCrear: (Map<String, Int>) -> Unit
+) {
+    val creditos = remember { mutableStateMapOf<String, String>() }
+    val validas = materias.mapNotNull { nombre ->
+        creditos[nombre]?.toIntOrNull()?.takeIf { it > 0 }?.let { nombre to it }
+    }.toMap()
+
+    AlertDialog(
+        onDismissRequest = onAhoraNo,
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Materias de tu calendario") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("Pon los créditos de las que quieras agregar.")
+                materias.forEach { nombre ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(nombre, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        OutlinedTextField(
+                            value = creditos[nombre].orEmpty(),
+                            onValueChange = { creditos[nombre] = it.filter(Char::isDigit) },
+                            label = { Text("Créditos") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.width(112.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onCrear(validas) }, enabled = validas.isNotEmpty()) {
+                Text("Crear")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onAhoraNo) {
+                Text("Ahora no", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    )
+}
 
 @Composable
 private fun DialogoConectarCalendario(
@@ -660,12 +889,15 @@ fun EntregasPreview() {
             ocupado = false,
             mensaje = null,
             error = null,
+            materiasNuevas = 2,
             onAgregar = {},
+            onEditar = {},
             onCambiar = {},
             onBorrar = {},
             onConectar = {},
             onActualizar = {},
-            onDesconectar = {}
+            onDesconectar = {},
+            onCrearMaterias = {}
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.evelynvarela.misemestre.ui.perfil
 
+import android.content.Context
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -29,9 +30,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +48,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,13 +56,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
+import com.evelynvarela.misemestre.data.DatosPerfil
 import com.evelynvarela.misemestre.data.Usuario
-import com.evelynvarela.misemestre.data.perfilEjemplo
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
 import com.evelynvarela.misemestre.ui.componentes.Pildora
+import com.evelynvarela.misemestre.ui.componentes.Reaccion
+import com.evelynvarela.misemestre.ui.componentes.ReaccionLumi
 import com.evelynvarela.misemestre.ui.inicio.InicioViewModel
 import com.evelynvarela.misemestre.ui.theme.Blanco
 import com.evelynvarela.misemestre.ui.theme.Bricolage
@@ -98,16 +105,51 @@ fun PerfilScreen(
 ) {
     val materias by viewModel.materias.collectAsState()
     val entregas by viewModel.entregas.collectAsState()
+    val perfil by viewModel.perfil.collectAsState()
     var confirmando by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf(false) }
+    var reaccion by remember { mutableStateOf<Reaccion?>(null) }
 
-    PerfilContenido(
-        usuario = viewModel.usuario,
-        totalMaterias = materias.orEmpty().size,
-        entregasListas = entregas.count { it.entregada },
-        onVolver = onVolver,
-        onCerrarSesion = { confirmando = true },
-        modifier = modifier
-    )
+    val totalMaterias = materias.orEmpty().size
+    val entregasListas = entregas.orEmpty().count { it.entregada }
+    val nivel = nivelDe(puntosDe(totalMaterias, entregasListas))
+    val contexto = LocalContext.current
+
+    LaunchedEffect(materias != null && entregas != null, nivel) {
+        if (materias != null && entregas != null) {
+            val preferencias = contexto.getSharedPreferences("lumi", Context.MODE_PRIVATE)
+            val clave = "nivel-${viewModel.usuario.correo}"
+            val anterior = preferencias.getInt(clave, nivel)
+            if (nivel > anterior) {
+                reaccion = Reaccion(CaraLumi.Feliz, "¡Subiste a ${niveles[nivel].nombre}!")
+            }
+            preferencias.edit { putInt(clave, nivel) }
+        }
+    }
+
+    Box(modifier.fillMaxSize()) {
+        PerfilContenido(
+            usuario = viewModel.usuario,
+            datos = perfil,
+            totalMaterias = totalMaterias,
+            entregasListas = entregasListas,
+            onVolver = onVolver,
+            onEditarCarne = { editando = true },
+            onCerrarSesion = { confirmando = true }
+        )
+        ReaccionLumi(reaccion, onTerminar = { reaccion = null })
+    }
+
+    if (editando) {
+        DialogoCarne(
+            datos = perfil,
+            onCancelar = { editando = false },
+            onGuardar = {
+                editando = false
+                viewModel.guardarPerfil(it)
+            }
+        )
+    }
 
     if (confirmando) {
         AlertDialog(
@@ -142,16 +184,70 @@ fun PerfilScreen(
 }
 
 @Composable
+private fun DialogoCarne(
+    datos: DatosPerfil,
+    onCancelar: () -> Unit,
+    onGuardar: (DatosPerfil) -> Unit
+) {
+    var universidad by remember { mutableStateOf(datos.universidad) }
+    var semestre by remember { mutableStateOf(datos.semestre) }
+
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Tu carné") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = universidad,
+                    onValueChange = { universidad = it },
+                    label = { Text("Universidad") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                OutlinedTextField(
+                    value = semestre,
+                    onValueChange = { semestre = it },
+                    label = { Text("Semestre") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onGuardar(DatosPerfil(universidad.trim(), semestre.trim())) },
+                enabled = universidad.isNotBlank() && semestre.isNotBlank()
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    )
+}
+
+private fun puntosDe(totalMaterias: Int, entregasListas: Int): Int =
+    totalMaterias * 10 + entregasListas * 20
+
+private fun nivelDe(puntos: Int): Int = niveles.indexOfLast { puntos >= it.desde }
+
+@Composable
 private fun PerfilContenido(
     usuario: Usuario,
+    datos: DatosPerfil,
     totalMaterias: Int,
     entregasListas: Int,
     onVolver: () -> Unit,
+    onEditarCarne: () -> Unit,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val puntos = totalMaterias * 10 + entregasListas * 20
-    val nivel = niveles.indexOfLast { puntos >= it.desde }
+    val puntos = puntosDe(totalMaterias, entregasListas)
+    val nivel = nivelDe(puntos)
     val logros = listOf(
         Logro("🌱", "Primera materia", totalMaterias >= 1),
         Logro("📬", "Primera entrega", entregasListas >= 1),
@@ -196,7 +292,7 @@ private fun PerfilContenido(
 
         Acuario(nivel)
         ProgresoNivel(puntos, nivel)
-        Carne(usuario)
+        Carne(usuario, datos, onEditarCarne)
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Dato("$totalMaterias", "Materias", Modifier.weight(1f))
@@ -335,11 +431,13 @@ private fun ProgresoNivel(puntos: Int, nivel: Int) {
 }
 
 @Composable
-private fun Carne(usuario: Usuario) {
+private fun Carne(usuario: Usuario, datos: DatosPerfil, onEditar: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Tinta, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(24.dp))
+            .background(Tinta)
+            .clickable(onClick = onEditar)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -360,7 +458,7 @@ private fun Carne(usuario: Usuario) {
         }
         Column {
             Text(
-                text = "CARNÉ · ${perfilEjemplo.universidad}",
+                text = "CARNÉ · ${datos.universidad.ifBlank { "Toca para agregar tu universidad" }}",
                 color = Color(0xFFCFC6F0),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodySmall
@@ -374,7 +472,7 @@ private fun Carne(usuario: Usuario) {
             )
             Text(usuario.correo, color = Color(0xFFCFC6F0))
             Text(
-                text = "Semestre ${perfilEjemplo.semestre}",
+                text = "Semestre ${datos.semestre}",
                 color = Color(0xFFCFC6F0),
                 style = MaterialTheme.typography.bodySmall
             )
@@ -434,9 +532,11 @@ fun PerfilPreview() {
     MiSemestreTheme {
         PerfilContenido(
             usuario = Usuario("Evelyn Varela", "estudiante@correo.com"),
+            datos = DatosPerfil("UCN", "2026-2"),
             totalMaterias = 2,
             entregasListas = 1,
             onVolver = {},
+            onEditarCarne = {},
             onCerrarSesion = {}
         )
     }

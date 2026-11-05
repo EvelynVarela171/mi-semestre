@@ -14,7 +14,8 @@ data class Entrega(
     val fecha: LocalDate,
     val entregada: Boolean = false,
     val importada: Boolean = false,
-    val oculta: Boolean = false
+    val oculta: Boolean = false,
+    val editada: Boolean = false
 )
 
 class Convertidores {

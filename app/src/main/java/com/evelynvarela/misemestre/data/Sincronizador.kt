@@ -46,11 +46,12 @@ class Sincronizador private constructor(context: Context) {
             val habiaSesion = uidActual != null
             detener()
             uidActual = uid
-            if (habiaSesion) {
-                enlace.olvidar()
-                scope.launch { dao.borrarTodo() }
+            if (habiaSesion) scope.launch { dao.borrarTodo() }
+            if (uid != null) {
+                if (enlaceDeOtraCuenta(enlace.dueno, uid)) enlace.olvidar()
+                enlace.dueno = uid
+                escuchar(uid)
             }
-            if (uid != null) escuchar(uid)
         }
     }
 

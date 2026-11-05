@@ -18,11 +18,26 @@ Para priorizar, ten en cuenta las fechas de entrega, el peso de las notas y lo q
 Explica los temas con ejemplos sencillos y ayuda a entender, sin hacer la tarea completa.
 """
 
+private const val LARGO_MAXIMO_FRASE = 120
+
+private const val INSTRUCCIONES_FRASE = """
+Recibes el nombre de una entrega universitaria.
+Responde en español con una sola frase de máximo 12 palabras: el primer paso concreto para empezarla.
+No saludes, no te presentes, no uses Markdown y no menciones otras tareas.
+"""
+
 class LumiRepository {
 
-    private val chat = Firebase.ai(backend = GenerativeBackend.googleAI())
+    private val ia = Firebase.ai(backend = GenerativeBackend.googleAI())
+    private val chat = ia
         .generativeModel(MODELO, systemInstruction = content { text(INSTRUCCIONES) })
         .startChat()
+    private val modeloFrases = ia
+        .generativeModel(MODELO, systemInstruction = content { text(INSTRUCCIONES_FRASE) })
+
+    suspend fun fraseDelDia(prioridad: String): String? =
+        modeloFrases.generateContent("Entrega: $prioridad")
+            .text?.trim()?.takeIf { it.isNotEmpty() && it.length <= LARGO_MAXIMO_FRASE }
 
     fun responder(pregunta: String, contexto: String): Flow<String> =
         chat.sendMessageStream("Datos del estudiante:\n$contexto\n\nPregunta: $pregunta")

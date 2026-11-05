@@ -45,10 +45,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
 import com.evelynvarela.misemestre.data.CalculadoraNotas
+import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.Materia
 import com.evelynvarela.misemestre.data.Nota
+import com.evelynvarela.misemestre.data.textoDias
+import com.evelynvarela.misemestre.data.textoFecha
+import com.evelynvarela.misemestre.ui.componentes.Pildora
+import com.evelynvarela.misemestre.ui.componentes.Reaccion
+import com.evelynvarela.misemestre.ui.componentes.ReaccionLumi
+import com.evelynvarela.misemestre.ui.componentes.reaccionANota
 import com.evelynvarela.misemestre.ui.materias.colorDeMateria
 import com.evelynvarela.misemestre.ui.theme.Bricolage
+import com.evelynvarela.misemestre.ui.theme.DuraznoClaro
 import com.evelynvarela.misemestre.ui.theme.Lila
 import com.evelynvarela.misemestre.ui.theme.LilaClaro
 import com.evelynvarela.misemestre.ui.theme.LilaOscuro
@@ -70,19 +78,24 @@ fun MateriaScreen(
 ) {
     val materia by viewModel.materia.collectAsState()
     val notas by viewModel.notas.collectAsState()
+    val entregas by viewModel.entregas.collectAsState()
 
     var agregando by remember { mutableStateOf(false) }
     var notaEditada by remember { mutableStateOf<Nota?>(null) }
+    var reaccion by remember { mutableStateOf<Reaccion?>(null) }
 
-    materia?.let {
-        MateriaContenido(
-            materia = it,
-            notas = notas,
-            onVolver = onVolver,
-            onAgregarNota = { agregando = true },
-            onEditarNota = { nota -> notaEditada = nota },
-            modifier = modifier
-        )
+    Box(modifier.fillMaxSize()) {
+        materia?.let {
+            MateriaContenido(
+                materia = it,
+                notas = notas,
+                entregas = entregas,
+                onVolver = onVolver,
+                onAgregarNota = { agregando = true },
+                onEditarNota = { nota -> notaEditada = nota }
+            )
+        }
+        ReaccionLumi(reaccion, onTerminar = { reaccion = null })
     }
 
     if (agregando) {
@@ -93,6 +106,7 @@ fun MateriaScreen(
             onGuardar = { nombre, peso, valor ->
                 agregando = false
                 viewModel.agregar(nombre, peso, valor)
+                valor?.let { reaccion = reaccionANota(it) }
             }
         )
     }
@@ -105,6 +119,7 @@ fun MateriaScreen(
             onGuardar = { nombre, peso, valor ->
                 notaEditada = null
                 viewModel.actualizar(nota.copy(nombre = nombre, peso = peso, valor = valor))
+                if (valor != nota.valor) valor?.let { reaccion = reaccionANota(it) }
             },
             onBorrar = {
                 notaEditada = null
@@ -118,6 +133,7 @@ fun MateriaScreen(
 private fun MateriaContenido(
     materia: Materia,
     notas: List<Nota>,
+    entregas: List<Entrega>,
     onVolver: () -> Unit,
     onAgregarNota: () -> Unit,
     onEditarNota: (Nota) -> Unit,
@@ -154,6 +170,7 @@ private fun MateriaContenido(
         }
 
         TarjetaMateriaGrande(materia, notas)
+        if (entregas.isNotEmpty()) ProximasEntregas(entregas)
         EncabezadoNotas(notas, onAgregarNota)
 
         if (notas.isEmpty()) {
@@ -191,7 +208,7 @@ private fun TarjetaMateriaGrande(materia: Materia, notas: List<Nota>) {
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = "${materia.creditos} créditos · nota mínima 3.0",
+                text = "${if (materia.creditos == 1) "1 crédito" else "${materia.creditos} créditos"} · nota mínima 3.0",
                 color = texto,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodySmall
@@ -214,6 +231,39 @@ private fun TarjetaMateriaGrande(materia: Materia, notas: List<Nota>) {
                 color = texto,
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+@Composable
+private fun ProximasEntregas(entregas: List<Entrega>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Próximas entregas",
+            fontFamily = Bricolage,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 18.sp
+        )
+        entregas.forEach { entrega ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                    .border(1.5.dp, Linea, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(entrega.nombre, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = textoFecha(entrega.fecha),
+                        color = TextoSuave,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Pildora(textoDias(entrega.fecha), DuraznoClaro, Color(0xFF5C2200))
+            }
         }
     }
 }
@@ -460,6 +510,7 @@ fun MateriaPreview() {
                 Nota(materiaId = "1", nombre = "Cátedra académica", peso = 20, valor = 5.0),
                 Nota(materiaId = "1", nombre = "Taller ABP", peso = 60)
             ),
+            entregas = emptyList(),
             onVolver = {},
             onAgregarNota = {},
             onEditarNota = {}

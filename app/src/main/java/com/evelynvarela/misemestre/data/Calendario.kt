@@ -108,6 +108,19 @@ fun idDeEvento(uid: String): String {
     return "cal-" + resumen.take(16).joinToString("") { "%02x".format(it) }
 }
 
+fun materiasSinCrear(
+    entregas: List<Entrega>,
+    materias: List<Materia>,
+    ignoradas: Set<String>
+): List<String> {
+    val existentes = materias.map { it.nombre.lowercase() }.toSet()
+    return entregas
+        .filter { it.importada && it.materia != MATERIA_POR_DEFECTO }
+        .map { it.materia }
+        .distinct()
+        .filterNot { it.lowercase() in existentes || it in ignoradas }
+}
+
 fun cambiosDeCalendario(
     existentes: List<Entrega>,
     eventos: List<EventoCalendario>,
@@ -120,6 +133,7 @@ fun cambiosDeCalendario(
         val id = idDeEvento(evento.uid)
         val actual = porId[id]
         when {
+            actual?.editada == true -> null
             actual != null -> actual
                 .copy(nombre = evento.nombre, materia = evento.materia, fecha = evento.fecha)
                 .takeIf { it != actual }

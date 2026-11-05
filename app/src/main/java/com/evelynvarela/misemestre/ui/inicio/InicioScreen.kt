@@ -22,8 +22,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,12 +40,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evelynvarela.misemestre.R
+import com.evelynvarela.misemestre.data.AnimoLumi
 import com.evelynvarela.misemestre.data.CalculadoraNotas
 import com.evelynvarela.misemestre.data.Entrega
 import com.evelynvarela.misemestre.data.EstadoNube
 import com.evelynvarela.misemestre.data.Materia
+import com.evelynvarela.misemestre.data.PlanDelDia
 import com.evelynvarela.misemestre.data.ResumenSemestre
 import com.evelynvarela.misemestre.data.Usuario
+import com.evelynvarela.misemestre.data.planDelDia
 import com.evelynvarela.misemestre.data.textoDias
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
@@ -80,13 +85,20 @@ fun InicioScreen(
     val estadoNube by viewModel.estadoNube.collectAsState()
     val resumen by viewModel.resumen.collectAsState()
     val entregas by viewModel.entregas.collectAsState()
+    val plan = remember(entregas) { entregas?.let { planDelDia(LocalDate.now(), it) } }
+
+    LaunchedEffect(plan) {
+        plan?.let(viewModel::pedirFrase)
+    }
 
     InicioContenido(
         usuario = viewModel.usuario,
         estadoNube = estadoNube,
         materias = materias,
         resumen = resumen,
-        entregas = entregas,
+        entregas = entregas.orEmpty(),
+        plan = plan,
+        frase = viewModel.fraseDelPlan,
         onAbrirMateria = onAbrirMateria,
         onVerMaterias = onVerMaterias,
         onVerEntregas = onVerEntregas,
@@ -103,6 +115,8 @@ private fun InicioContenido(
     materias: List<Materia>?,
     resumen: ResumenSemestre,
     entregas: List<Entrega>,
+    plan: PlanDelDia?,
+    frase: String?,
     onAbrirMateria: (String) -> Unit,
     onVerMaterias: () -> Unit,
     onVerEntregas: () -> Unit,
@@ -143,10 +157,10 @@ private fun InicioContenido(
         ) {
             Encabezado(usuario, onVerPerfil)
             ChipNube(estadoNube)
+            plan?.let { TarjetaLumi(it, frase, onVerAsistente) }
             TarjetaPromedio(resumen)
             SeccionMaterias(materias, onAbrirMateria, onVerMaterias)
             proxima?.let { SeccionLoQueViene(it, onVerEntregas) }
-            TarjetaLumi(onVerAsistente)
         }
     }
 }
@@ -397,30 +411,42 @@ private fun SeccionLoQueViene(entrega: Entrega, onVerEntregas: () -> Unit) {
 }
 
 @Composable
-private fun TarjetaLumi(onVerAsistente: () -> Unit) {
+private fun TarjetaLumi(plan: PlanDelDia, frase: String?, onVerAsistente: () -> Unit) {
+    val preocupada = plan.animo == AnimoLumi.Preocupada
+    val colorTexto = if (preocupada) ColorRosaOscuro else ColorDurazno
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(DuraznoClaro)
+            .background(if (preocupada) RosaClaro else DuraznoClaro)
             .clickable(onClick = onVerAsistente)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        LumiAnimada(cara = CaraLumi.Normal, saludando = false, modifier = Modifier.size(46.dp))
+        LumiAnimada(
+            cara = when (plan.animo) {
+                AnimoLumi.Contenta -> CaraLumi.Feliz
+                AnimoLumi.Tranquila -> CaraLumi.Normal
+                AnimoLumi.Atenta -> CaraLumi.Sorpresa
+                AnimoLumi.Preocupada -> CaraLumi.Preocupada
+            },
+            saludando = plan.animo == AnimoLumi.Contenta,
+            modifier = Modifier.size(58.dp)
+        )
         Column(Modifier.weight(1f)) {
-            Text("Lumi tiene un plan para hoy", fontWeight = FontWeight.Bold, color = ColorDurazno)
+            Text(plan.titulo, fontWeight = FontWeight.Bold, color = colorTexto)
             Text(
-                text = "Toca para ver qué priorizar",
-                color = ColorDurazno,
+                text = frase ?: plan.detalle,
+                color = colorTexto,
                 style = MaterialTheme.typography.bodySmall
             )
         }
         Icon(
             painter = painterResource(R.drawable.ic_siguiente),
             contentDescription = null,
-            tint = ColorDurazno
+            tint = colorTexto
         )
     }
 }
@@ -451,6 +477,8 @@ fun InicioPreview() {
             ),
             resumen = ResumenSemestre(4.2, 40),
             entregas = emptyList(),
+            plan = PlanDelDia("Hoy avanza en Taller ABP", "vence en 5 días", AnimoLumi.Tranquila),
+            frase = null,
             onAbrirMateria = {},
             onVerMaterias = {},
             onVerEntregas = {},

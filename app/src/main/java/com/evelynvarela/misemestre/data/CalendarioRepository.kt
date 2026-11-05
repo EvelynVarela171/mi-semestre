@@ -20,8 +20,18 @@ class EnlaceCalendario(context: Context) {
         get() = preferencias.getString("enlace", null)
         set(valor) = preferencias.edit { putString("enlace", valor) }
 
+    var materiasIgnoradas: Set<String>
+        get() = preferencias.getStringSet("materiasIgnoradas", emptySet()).orEmpty()
+        set(valor) = preferencias.edit { putStringSet("materiasIgnoradas", valor) }
+
+    var dueno: String?
+        get() = preferencias.getString("dueno", null)
+        set(valor) = preferencias.edit { putString("dueno", valor) }
+
     fun olvidar() = preferencias.edit { clear() }
 }
+
+fun enlaceDeOtraCuenta(dueno: String?, uid: String): Boolean = dueno != null && dueno != uid
 
 class CalendarioRepository(
     private val entregas: EntregaRepository,

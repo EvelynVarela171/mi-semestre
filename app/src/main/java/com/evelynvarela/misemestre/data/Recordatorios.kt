@@ -18,6 +18,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.evelynvarela.misemestre.MainActivity
 import com.evelynvarela.misemestre.R
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import java.io.IOException
 import java.time.Duration
 import java.time.LocalDate
@@ -61,6 +63,8 @@ class RecordatorioWorker(
         val contexto = applicationContext
         val dao = AppDatabase.obtener(contexto).entregaDao()
         val repositorio = EntregaRepository(dao)
+
+        if (Firebase.auth.currentUser == null) return Result.success()
 
         try {
             CalendarioRepository(repositorio, EnlaceCalendario(contexto)).actualizar()

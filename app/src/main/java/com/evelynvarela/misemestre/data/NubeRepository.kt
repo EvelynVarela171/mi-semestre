@@ -54,7 +54,8 @@ class NubeRepository(
         "fecha" to entrega.fecha.toString(),
         "entregada" to entrega.entregada,
         "importada" to entrega.importada,
-        "oculta" to entrega.oculta
+        "oculta" to entrega.oculta,
+        "editada" to entrega.editada
     )
 
     fun borrar(entrega: Entrega) {
@@ -116,6 +117,7 @@ fun DocumentSnapshot.aEntrega(): Entrega? {
         fecha = fecha,
         entregada = getBoolean("entregada") ?: false,
         importada = getBoolean("importada") ?: false,
-        oculta = getBoolean("oculta") ?: false
+        oculta = getBoolean("oculta") ?: false,
+        editada = getBoolean("editada") ?: false
     )
 }

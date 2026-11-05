@@ -5,10 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.evelynvarela.misemestre.data.AppDatabase
+import com.evelynvarela.misemestre.data.EntregaRepository
 import com.evelynvarela.misemestre.data.MateriaRepository
 import com.evelynvarela.misemestre.data.Nota
 import com.evelynvarela.misemestre.data.NotaRepository
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,6 +31,10 @@ class MateriaViewModel(
 
     val notas = repositorio.notas(materiaId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val entregas = combine(materia, EntregaRepository(base.entregaDao()).entregas) { materia, lista ->
+        lista.filter { !it.entregada && it.materia.equals(materia?.nombre, ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun agregar(nombre: String, peso: Int, valor: Double?) {
         viewModelScope.launch {

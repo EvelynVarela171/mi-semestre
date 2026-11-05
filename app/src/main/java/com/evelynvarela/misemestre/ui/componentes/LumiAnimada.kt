@@ -40,7 +40,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
 
-enum class CaraLumi { Normal, Feliz, Guino, Sorpresa }
+enum class CaraLumi { Normal, Feliz, Guino, Sorpresa, Preocupada }
 
 private val Cupula = Color(0xFFC9B8FD)
 private val Borde = Color(0xFFB9A6FB)
@@ -155,6 +155,13 @@ fun LumiAnimada(
                     dibujarOjo(68f, 1.2f)
                     dibujarOjo(92f, 1.2f)
                     drawOval(Tinta, Offset(77f, 79f), Size(6f, 8f))
+                }
+                CaraLumi.Preocupada -> {
+                    dibujarOjo(68f, ojos.value)
+                    dibujarOjo(92f, ojos.value)
+                    dibujarBoca("M60 56l12 -4")
+                    dibujarBoca("M100 56l-12 -4")
+                    dibujarBoca("M74 85q6 -7 12 0")
                 }
             }
 
