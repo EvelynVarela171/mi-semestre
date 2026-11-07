@@ -22,6 +22,32 @@ class LoginViewModel : ViewModel() {
         private set
     var error by mutableStateOf<String?>(null)
         private set
+    var aviso by mutableStateOf<String?>(null)
+        private set
+
+    fun recuperar(correo: String) {
+        val limpio = correo.trim()
+        if (limpio.isBlank()) {
+            aviso = null
+            error = "Escribe tu correo para enviarte el enlace."
+            return
+        }
+        viewModelScope.launch {
+            cargando = true
+            error = null
+            aviso = null
+            try {
+                sesion.recuperar(limpio)
+                aviso = mensajeDeRecuperacion(limpio)
+            } catch (e: FirebaseAuthInvalidCredentialsException) {
+                error = "Revisa que el correo esté bien escrito."
+            } catch (e: FirebaseException) {
+                error = mensajeDe(e)
+            } finally {
+                cargando = false
+            }
+        }
+    }
 
     fun entrar(correo: String, clave: String, onListo: () -> Unit) {
         intentar(onListo) { sesion.entrar(correo.trim(), clave) }
@@ -33,12 +59,14 @@ class LoginViewModel : ViewModel() {
 
     fun limpiarError() {
         error = null
+        aviso = null
     }
 
     private fun intentar(onListo: () -> Unit, accion: suspend () -> Unit) {
         viewModelScope.launch {
             cargando = true
             error = null
+            aviso = null
             try {
                 accion()
                 onListo()
@@ -59,3 +87,7 @@ class LoginViewModel : ViewModel() {
         else -> "No se pudo continuar. Inténtalo de nuevo."
     }
 }
+
+private fun mensajeDeRecuperacion(correo: String): String =
+    "Si $correo tiene una cuenta, te llegará un enlace para crear una contraseña nueva. " +
+        "Revisa también la carpeta de spam."

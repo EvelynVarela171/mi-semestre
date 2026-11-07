@@ -22,7 +22,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -39,17 +42,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.evelynvarela.misemestre.R
 import com.evelynvarela.misemestre.ui.componentes.CaraLumi
 import com.evelynvarela.misemestre.ui.componentes.LumiAnimada
 import com.evelynvarela.misemestre.ui.theme.Cielo
 import com.evelynvarela.misemestre.ui.theme.Durazno
 import com.evelynvarela.misemestre.ui.theme.Lila
+import com.evelynvarela.misemestre.ui.theme.LilaOscuro
 import com.evelynvarela.misemestre.ui.theme.MiSemestreTheme
 import com.evelynvarela.misemestre.ui.theme.Rosa
 import kotlinx.coroutines.delay
@@ -64,11 +71,13 @@ fun LoginScreen(
     LoginContenido(
         cargando = viewModel.cargando,
         error = viewModel.error,
+        aviso = viewModel.aviso,
         onEntrar = { correo, clave -> viewModel.entrar(correo, clave, onEntrar) },
         onRegistrar = { nombre, correo, clave ->
             viewModel.registrar(nombre, correo, clave, onEntrar)
         },
         onCambiarModo = viewModel::limpiarError,
+        onRecuperar = viewModel::recuperar,
         modifier = modifier
     )
 }
@@ -85,9 +94,11 @@ private fun coloresCampo() = OutlinedTextFieldDefaults.colors(
 private fun LoginContenido(
     cargando: Boolean,
     error: String?,
+    aviso: String?,
     onEntrar: (correo: String, clave: String) -> Unit,
     onRegistrar: (nombre: String, correo: String, clave: String) -> Unit,
     onCambiarModo: () -> Unit,
+    onRecuperar: (correo: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -98,6 +109,8 @@ private fun LoginContenido(
     var caraLumi by remember { mutableStateOf(CaraLumi.Normal) }
     var lumiSaluda by remember { mutableStateOf(false) }
     var claveEnFoco by remember { mutableStateOf(false) }
+    var verClave by remember { mutableStateOf(false) }
+    var recuperando by remember { mutableStateOf(false) }
     val tecladoAbierto = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val scope = rememberCoroutineScope()
 
@@ -148,7 +161,7 @@ private fun LoginContenido(
             LumiAnimada(
                 cara = caraLumi,
                 saludando = lumiSaluda,
-                tapandoOjos = claveEnFoco,
+                tapandoOjos = claveEnFoco && !verClave,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(190.dp)
@@ -233,14 +246,42 @@ private fun LoginContenido(
                 onValueChange = { clave = it },
                 label = { Text("Contraseña") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (verClave) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { verClave = !verClave }) {
+                        Icon(
+                            painter = painterResource(if (verClave) R.drawable.ic_ojo_cerrado else R.drawable.ic_ojo),
+                            contentDescription = if (verClave) "Ocultar contraseña" else "Mostrar contraseña",
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                },
                 shape = RoundedCornerShape(16.dp),
                 colors = coloresCampo(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { claveEnFoco = it.isFocused }
             )
+
+            AnimatedVisibility(visible = !creando, modifier = Modifier.align(Alignment.End)) {
+                TextButton(onClick = { recuperando = true }, enabled = !cargando) {
+                    Text(
+                        text = "¿Olvidaste tu contraseña?",
+                        color = LilaOscuro,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            aviso?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = LilaOscuro,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             error?.let {
                 Spacer(Modifier.height(12.dp))
@@ -290,6 +331,58 @@ private fun LoginContenido(
             Spacer(Modifier.height(8.dp))
         }
     }
+
+    if (recuperando) {
+        DialogoRecuperar(
+            correoInicial = correo,
+            onEnviar = {
+                correo = it
+                recuperando = false
+                onRecuperar(it)
+            },
+            onCancelar = { recuperando = false }
+        )
+    }
+}
+
+@Composable
+private fun DialogoRecuperar(
+    correoInicial: String,
+    onEnviar: (String) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var correo by remember { mutableStateOf(correoInicial) }
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("¿Olvidaste tu contraseña?") },
+        text = {
+            Column {
+                Text("Te enviaremos un enlace a tu correo para crear una contraseña nueva.")
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = correo,
+                    onValueChange = { correo = it },
+                    label = { Text("Correo") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = coloresCampo(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onEnviar(correo.trim()) }, enabled = correo.isNotBlank()) {
+                Text("Enviar enlace", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
@@ -299,9 +392,11 @@ fun LoginPreview() {
         LoginContenido(
             cargando = false,
             error = null,
+            aviso = null,
             onEntrar = { _, _ -> },
             onRegistrar = { _, _, _ -> },
-            onCambiarModo = {}
+            onCambiarModo = {},
+            onRecuperar = {}
         )
     }
 }

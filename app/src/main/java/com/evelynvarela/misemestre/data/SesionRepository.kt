@@ -23,5 +23,10 @@ class SesionRepository(private val auth: FirebaseAuth = Firebase.auth) {
         resultado.user?.updateProfile(userProfileChangeRequest { displayName = nombre })?.await()
     }
 
+    suspend fun recuperar(correo: String) {
+        auth.setLanguageCode("es")
+        auth.sendPasswordResetEmail(correo).await()
+    }
+
     fun salir() = auth.signOut()
 }
