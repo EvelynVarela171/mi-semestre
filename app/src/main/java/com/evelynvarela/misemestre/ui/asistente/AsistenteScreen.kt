@@ -107,7 +107,7 @@ private fun AsistenteContenido(
                     BurbujaUsuario(mensaje.texto)
                 }
             }
-            if (pensando) BurbujaLumi("Lumi está pensando...", esError = false)
+            if (pensando) BurbujaLumi("Lumi está pensando…", esError = false)
             if (mensajes.size == 1) Sugerencias(onEnviar)
         }
 

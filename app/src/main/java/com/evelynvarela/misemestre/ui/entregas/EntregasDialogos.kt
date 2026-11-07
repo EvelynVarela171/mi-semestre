@@ -221,7 +221,7 @@ internal fun DialogoConectarCalendario(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     "Pega el enlace .ics de tu calendario. En Canvas está en " +
-                        "Calendario, Fuente de calendario. Es privado: no lo compartas."
+                        "Calendario › Fuente de calendario. Es privado: no lo compartas."
                 )
                 OutlinedTextField(
                     value = enlace,
@@ -244,7 +244,7 @@ internal fun DialogoConectarCalendario(
         },
         confirmButton = {
             Button(onClick = { onConectar(enlace) }, enabled = enlace.isNotBlank() && !ocupado) {
-                Text(if (ocupado) "Conectando..." else "Conectar")
+                Text(if (ocupado) "Conectando…" else "Conectar")
             }
         },
         dismissButton = {

@@ -124,7 +124,7 @@ internal fun TarjetaCalendario(
         )
         Text(
             text = when {
-                ocupado -> "Leyendo tu calendario..."
+                ocupado -> "Leyendo tu calendario…"
                 error != null -> error
                 mensaje != null -> mensaje
                 conectado -> "Se actualiza solo cada día"

@@ -30,7 +30,13 @@ fun contextoParaLumi(
         .sortedBy { it.fecha }
         .map { entrega ->
             val dias = ChronoUnit.DAYS.between(hoy, entrega.fecha)
-            val plazo = if (dias < 0) "venció hace ${-dias} días" else "faltan $dias días"
+            val plazo = when {
+                dias == -1L -> "venció ayer"
+                dias < 0 -> "venció hace ${-dias} días"
+                dias == 0L -> "vence hoy"
+                dias == 1L -> "vence mañana"
+                else -> "faltan $dias días"
+            }
             "- ${entrega.nombre} de ${entrega.materia}: ${entrega.fecha}, $plazo"
         }
 

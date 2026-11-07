@@ -305,7 +305,7 @@ private fun LoginContenido(
             ) {
                 Text(
                     text = when {
-                        cargando -> "Un momento..."
+                        cargando -> "Un momento…"
                         creando -> "Crear cuenta"
                         else -> "Entrar"
                     },

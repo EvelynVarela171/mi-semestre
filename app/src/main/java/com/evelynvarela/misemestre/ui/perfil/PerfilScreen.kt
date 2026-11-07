@@ -421,7 +421,9 @@ private fun ProgresoNivel(puntos: Int, nivel: Int) {
             text = if (siguiente == null) {
                 "Lumi llegó al nivel máximo"
             } else {
-                "Te faltan ${siguiente.desde - puntos} puntos para ${siguiente.nombre}"
+                val faltan = siguiente.desde - puntos
+                if (faltan == 1) "Te falta 1 punto para ${siguiente.nombre}"
+                else "Te faltan $faltan puntos para ${siguiente.nombre}"
             },
             color = TextoSuave,
             fontWeight = FontWeight.Bold,

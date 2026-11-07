@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +37,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -191,25 +192,47 @@ fun TarjetaMateria(
 ) {
     val (fondo, texto) = colorDeMateria(materia.id)
 
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .height(112.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(fondo)
             .clickable(onClick = onAbrir)
-            .padding(start = 14.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(14.dp)
     ) {
-        Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
-            Text(materia.nombre, color = texto, fontWeight = FontWeight.Bold)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(end = if (onBorrar != null) 22.dp else 0.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = materia.nombre,
+                color = texto,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 19.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 text = if (materia.creditos == 1) "1 crédito" else "${materia.creditos} créditos",
                 color = texto,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = 0.45f))
+                    .padding(horizontal = 10.dp, vertical = 3.dp)
             )
         }
         if (onBorrar != null) {
-            IconButton(onClick = onBorrar) {
+            IconButton(
+                onClick = onBorrar,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 8.dp, y = (-8).dp)
+                    .size(36.dp)
+            ) {
                 Text("✕", color = texto)
             }
         }
