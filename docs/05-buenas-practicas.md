@@ -138,6 +138,5 @@ Ser honesta sobre lo pendiente también es una buena práctica. Esto se haría a
 | Sin pruebas de interfaz | Un cambio visual puede romper un flujo | Pruebas con `compose-ui-test` en `androidTest` |
 | Sin integración continua | Las pruebas dependen de ejecutarlas a mano | GitHub Actions que corra `testDebugUnitTest` en cada push |
 | Sin ofuscación en *release* | APK más grande y fácil de inspeccionar | Activar `isMinifyEnabled` con R8 |
-| Sin recuperar contraseña | Un usuario podría perder el acceso | `sendPasswordResetEmail` de Firebase |
 | Textos dentro del código | Difícil traducir la app | Mover a `strings.xml` |
 | API deprecada al deslizar una entrega | Puede dejar de funcionar en una versión futura de Compose | Reemplazar `confirmValueChange` de `rememberSwipeToDismissBoxState` por anclas dinámicas |

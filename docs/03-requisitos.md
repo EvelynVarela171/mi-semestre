@@ -6,6 +6,7 @@
 |---|---|---|
 | RF-01 | El sistema permite registrarse e iniciar sesión con correo y contraseña. | HU-01, HU-02 |
 | RF-02 | El sistema recuerda la sesión iniciada al volver a abrir la app. | HU-02 |
+| RF-02b | El sistema permite mostrar u ocultar la contraseña y enviar un correo para restablecerla. | HU-02 |
 | RF-03 | El sistema guarda materias, notas, entregas y perfil en la nube, separados por usuario. | HU-03 |
 | RF-04 | El sistema permite crear y borrar materias con nombre y créditos; al borrar una materia se borran sus notas. | HU-04 |
 | RF-05 | El sistema permite crear, editar y borrar notas con nombre, peso (%) y valor opcional de 0.0 a 5.0. | HU-05 |
@@ -52,7 +53,7 @@ Relaciona cada historia con el código que la implementa y la prueba que la cubr
 
 | Historia | Código principal | Prueba automática | Verificada en emulador |
 |---|---|---|---|
-| HU-01, HU-02 | `SesionRepository`, `LoginViewModel` | — | ✅ |
+| HU-01, HU-02 | `SesionRepository`, `LoginViewModel` | Prueba manual (06/11): ver contraseña y recuperación por correo | ✅ |
 | HU-03 | `Sincronizador`, `NubeRepository` | `SincronizacionTest` | ✅ |
 | HU-04, HU-05 | `MateriaRepository`, `NotaRepository` | — | ✅ |
 | HU-06 | `CalculadoraNotas.notaNecesaria` | `CalculadoraNotasTest` | ✅ |

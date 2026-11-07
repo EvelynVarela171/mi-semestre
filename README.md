@@ -12,7 +12,7 @@ App Android para organizar el semestre universitario: materias, notas, promedio 
 | **Arquitectura** | MVVM con repositorios, offline-first |
 | **Nube** | Firebase Auth, Cloud Firestore y Firebase AI Logic (Gemini) |
 | **Video de sustentación** | _(enlace pendiente)_ |
-| **Diapositivas** | _(enlace pendiente)_ |
+| **Diapositivas** | [PDF](presentacion/Mi-Semestre.pdf) · [PowerPoint](presentacion/Mi-Semestre.pptx) |
 
 ---
 
@@ -43,7 +43,7 @@ Un estudiante lleva sus notas en una hoja de cálculo, las fechas en Canvas, los
 
 ### Funciones principales
 
-- **Cuenta propia y datos en la nube.** Registro e inicio de sesión con correo. Las materias, notas y entregas se guardan en el teléfono y se sincronizan con Firestore, así que funcionan sin internet y no se pierden al cambiar de equipo.
+- **Cuenta propia y datos en la nube.** Registro e inicio de sesión con correo, con opción de ver la contraseña y de recuperarla por correo. Las materias, notas y entregas se guardan en el teléfono y se sincronizan con Firestore, así que funcionan sin internet y no se pierden al cambiar de equipo.
 - **Materias y notas.** Cada materia tiene créditos y notas con su porcentaje. La app calcula el promedio de lo evaluado, cuánto falta por definir y la **nota mínima que necesitas** en lo que queda para aprobar con 3.0.
 - **Promedio del semestre** ponderado por créditos, visible en Inicio.
 - **Entregas.** Lista de pendientes y entregadas, semana con días tocables para filtrar, deslizar para marcar como lista o borrar, y edición de nombre, materia y fecha.
@@ -273,6 +273,7 @@ app/src/main/java/com/evelynvarela/misemestre/
     └── theme/                          colores y tipografías
 app/src/test/                           pruebas unitarias
 docs/capturas/                          imágenes de este README
+presentacion/                           diapositivas de la sustentación (PDF y PowerPoint)
 firestore.rules                         reglas de seguridad de la base
 ```
 

@@ -106,8 +106,10 @@ flowchart LR
 1. **Dado** que tengo cuenta, **cuando** entro con mis datos, **entonces** veo Inicio con mis materias y entregas.
 2. **Dado** que ya inicié sesión antes, **cuando** abro la app, **entonces** paso directo a Inicio sin volver a escribir la contraseña.
 3. **Dado** que me equivoco de contraseña, **cuando** intento entrar, **entonces** veo un error y nada se borra.
+4. **Dado** que escribo la contraseña, **cuando** toco el ojo, **entonces** la veo en texto claro y Lumi deja de taparse los ojos; al tocarlo otra vez se oculta.
+5. **Dado** que olvidé la contraseña, **cuando** toco "¿Olvidaste tu contraseña?" y envío mi correo, **entonces** Firebase me manda un enlace en español para crear una nueva.
 
-**Implementación:** `BienvenidaScreen`, `LoginViewModel.entrar`, `SesionRepository.entrar`.
+**Implementación:** `BienvenidaScreen`, `LoginScreen` (`DialogoRecuperar`), `LoginViewModel.entrar` y `recuperar`, `SesionRepository.entrar` y `recuperar`.
 
 ### HU-03 · Tener mis datos en la nube y sin internet
 
