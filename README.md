@@ -11,7 +11,7 @@ App Android para organizar el semestre universitario: materias, notas, promedio 
 | **Lenguaje** | Kotlin + Jetpack Compose |
 | **Arquitectura** | MVVM con repositorios, offline-first |
 | **Nube** | Firebase Auth, Cloud Firestore y Firebase AI Logic (Gemini) |
-| **Video de sustentación** | _(enlace pendiente)_ |
+| **Video de sustentación** | [Ver en YouTube](https://youtu.be/OiVg2X2AB-E) |
 | **Diapositivas** | [PDF](presentacion/Mi-Semestre.pdf) · [PowerPoint](presentacion/Mi-Semestre.pptx) |
 
 ---
@@ -74,7 +74,7 @@ Capturas tomadas en el emulador con datos reales del semestre de la autora (el c
 | <img src="docs/capturas/materias.png" width="230" alt="Lista de materias"> | <img src="docs/capturas/materia.png" width="230" alt="Detalle de una materia con sus próximas entregas"> | <img src="docs/capturas/perfil.png" width="230" alt="Perfil con nivel, carné y logros"> |
 | Materias con créditos | Notas y próximas entregas | Nivel, carné y logros |
 
-La demostración completa está en el video de sustentación _(enlace pendiente)_.
+La demostración completa está en el [video de sustentación](https://youtu.be/OiVg2X2AB-E).
 
 ## Arquitectura
 
